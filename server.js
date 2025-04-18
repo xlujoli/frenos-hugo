@@ -4,7 +4,8 @@ const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 
 const app = express();
-const PORT = 3000;
+// Use port provided by environment (Render) or default to 3000
+const PORT = process.env.PORT || 3000;
 
 const dbPath = path.resolve(__dirname, "database", "frenos.db");
 const db = new sqlite3.Database(dbPath, (err) => {
@@ -82,5 +83,6 @@ app.post("/cars/register", (req, res) => {
 
 // Iniciar servidor
 app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+  // Log the actual port being used
+  console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
