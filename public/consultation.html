@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Consultation - Frenos Hugo</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Consult Service History</h1>
+      <nav>
+        <ul>
+          <li><a href="index.html">Registrar Servicio</a></li>
+          <li><a href="cars.html">Vehículos</a></li>
+          <li><a href="services.html">Servicios</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <div class="consultation-container">
+        <!-- Added container div -->
+        <form class="card" action="/consult-service" method="GET">
+          <h3>Consulta de Servicios</h3>
+          <label for="plate">Placa:</label>
+          <input
+            type="text"
+            id="plate"
+            name="plate"
+            style="text-transform: uppercase"
+            required
+          />
+
+          <button type="submit">Consultar</button>
+        </form>
+        <div id="results"></div>
+      </div>
+      <!-- Close container div -->
+    </main>
+    <footer>
+      <p>&copy; 2025 Frenos Hugo. All rights reserved.</p>
+    </footer>
+    <script>
+      document
+        .querySelector("form")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault(); // Prevent default form submission
+
+          const plate = document.getElementById("plate").value;
+          console.log(
+            `Frontend: Attempting to fetch services for plate: ${plate}`
+          ); // <-- Add this log
+
+          try {
+            const response = await fetch(
+              `/consultation/consult-service?plate=${plate}`
+            );
+
+            if (!response.ok) {
+              let errorMessage = "Error al consultar servicios."; // Default message
+              try {
+                // Try to get specific message from backend
+                const errorData = await response.json();
+                errorMessage =
+                  errorData.message ||
+                  `Error ${response.status}: ${response.statusText}`;
+              } catch (parseError) {
+                // If backend error response is not JSON
+                errorMessage = `Error ${response.status}: ${response.statusText}. No se pudo obtener más detalle.`;
+              }
+              alert(errorMessage);
+              return;
+            }
+
+            const services = await response.json();
+
+            // Sort services by date (descending - most recent first)
+            services.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const resultsContainer = document.getElementById("results");
+            resultsContainer.innerHTML = "<h3>Resultados:</h3>";
+
+            if (services.length === 0) {
+              resultsContainer.innerHTML +=
+                "<p>No se encontraron servicios para esta placa.</p>";
+              return;
+            }
+
+            // Create table
+            const table = document.createElement("table");
+            table.classList.add("results-table"); // Optional: Add a class for styling
+
+            // Create table header
+            const thead = table.createTHead();
+            const headerRow = thead.insertRow();
+            const headers = ["Fecha", "Trabajo", "Total"]; // Changed Costo to Total
+            headers.forEach((headerText) => {
+              const th = document.createElement("th");
+              th.textContent = headerText;
+              headerRow.appendChild(th);
+            });
+
+            // Create table body
+            const tbody = table.createTBody();
+            services.forEach((service) => {
+              const row = tbody.insertRow();
+
+              // Changed order of cell creation and population
+              const cellDate = row.insertCell();
+              // Format date as Day/Month/Year-Weekday
+              let formattedDate = "N/A";
+              if (service.date) {
+                const dateObj = new Date(service.date);
+                const weekday = dateObj.toLocaleDateString("es-ES", {
+                  weekday: "long",
+                }); // Get weekday name in Spanish
+                const day = dateObj.getDate();
+                const month = dateObj.getMonth() + 1; // Month is 0-indexed
+                const year = dateObj.getFullYear();
+                // Changed the order in the template literal
+                formattedDate = `${day}/${month}/${year}-${weekday}`;
+              }
+              cellDate.textContent = formattedDate;
+
+              const cellWork = row.insertCell();
+              cellWork.textContent = service.work;
+
+              const cellCost = row.insertCell();
+              cellCost.textContent = service.cost; // Consider formatting as currency if needed
+            });
+
+            resultsContainer.appendChild(table);
+          } catch (error) {
+            // Network errors, etc.
+            console.error("Error de red o al procesar la solicitud:", error);
+            alert(
+              "No se pudo conectar con el servidor o procesar la respuesta. Intente nuevamente."
+            );
+          }
+        });
+    </script>
+  </body>
+</html>

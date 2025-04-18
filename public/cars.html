@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registrar Vehículo - Frenos Hugo</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Registrar Vehículo</h1>
+      <nav>
+        <ul>
+          <li><a href="index.html">Registrar Servicio</a></li>
+          <li><a href="consultation.html">Consulta</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <!-- Changed action/method, will be handled by JS -->
+      <form class="card" id="car-registration-form">
+        <h3>Información del Vehículo</h3>
+        <label for="plate">Placa:</label>
+        <input
+          type="text"
+          id="plate"
+          name="plate"
+          style="text-transform: uppercase"
+          required
+        />
+
+        <label for="brand">Marca:</label>
+        <input
+          type="text"
+          id="brand"
+          name="brand"
+          style="text-transform: uppercase"
+          required
+        />
+
+        <label for="model">Modelo:</label>
+        <input
+          type="text"
+          id="model"
+          name="model"
+          style="text-transform: uppercase"
+          required
+        />
+
+        <label for="owner">Propietario:</label>
+        <input
+          type="text"
+          id="owner"
+          name="owner"
+          style="text-transform: uppercase"
+          required
+        />
+
+        <label for="phone">Teléfono:</label>
+        <input type="tel" id="phone" name="phone" required />
+
+        <button type="submit">Registrar Vehículo</button>
+      </form>
+      <div id="message-area" style="margin-top: 15px; text-align: center"></div>
+    </main>
+    <footer>
+      <p>&copy; 2025 Frenos Hugo. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+      const form = document.getElementById("car-registration-form");
+      const messageArea = document.getElementById("message-area");
+
+      // Pre-fill plate from URL if present (from service registration failure)
+      const urlParams = new URLSearchParams(window.location.search);
+      const plateFromUrl = urlParams.get("plate");
+      if (plateFromUrl) {
+        document.getElementById("plate").value = plateFromUrl;
+      }
+
+      form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        messageArea.textContent = "";
+        messageArea.style.color = "black";
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+          // Use the correct route defined in server.js
+          const response = await fetch("/cars/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+
+          const responseData = await response.json();
+
+          if (response.ok) {
+            // Status 201 Created
+            alert(responseData.message); // Show success message
+            // Redirect to index.html with the new plate
+            window.location.href = `index.html?plate=${responseData.plate}`; // Changed services.html to index.html
+          } else {
+            // Handle errors (like 409 Conflict for duplicate plate)
+            messageArea.textContent = `Error: ${
+              responseData.message || "Ocurrió un error desconocido."
+            }`;
+            messageArea.style.color = "red";
+          }
+        } catch (error) {
+          console.error("Error al registrar vehículo:", error);
+          messageArea.textContent =
+            "Error de conexión o al procesar la solicitud. Intente nuevamente.";
+          messageArea.style.color = "red";
+        }
+      });
+    </script>
+  </body>
+</html>

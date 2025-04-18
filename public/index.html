@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Servicios - Frenos Hugo</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Registrar Servicio</h1>
+      <nav>
+        <ul>
+          <li><a href="cars.html">Vehículos</a></li>
+          <li><a href="consultation.html">Consulta</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <form class="card" id="serviceForm">
+        <h3>Información del Servicio</h3>
+        <label for="plate">Placa:</label>
+        <input
+          type="text"
+          id="plate"
+          name="plate"
+          style="text-transform: uppercase"
+          required
+        />
+
+        <label for="work">Trabajo Realizado:</label>
+        <textarea
+          id="work"
+          name="work"
+          rows="4"
+          style="text-transform: uppercase"
+          required
+        ></textarea>
+
+        <label for="cost">Total:</label>
+        <!-- Changed from Costo -->
+        <input type="number" id="cost" name="cost" required />
+
+        <button type="submit">Registrar Servicio</button>
+      </form>
+    </main>
+    <footer>
+      <p>&copy; 2025 Frenos Hugo. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+      // Pre-fill plate from URL if present (from car registration)
+      const urlParams = new URLSearchParams(window.location.search);
+      const plateFromUrl = urlParams.get("plate");
+      if (plateFromUrl) {
+        document.getElementById("plate").value = plateFromUrl;
+      }
+
+      const plateInput = document.getElementById("plate");
+
+      plateInput.addEventListener("input", async function () {
+        const plate = plateInput.value.toUpperCase();
+
+        if (plate.length >= 3) {
+          // Start validation after 3 characters
+          try {
+            const response = await fetch(`/cars/check/${plate}`);
+            if (!response.ok) {
+              throw new Error(`Error del servidor: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (!data.exists) {
+              plateInput.setCustomValidity(
+                `La placa ${plate} no está registrada. Puede registrarla en la sección de vehículos.`
+              );
+            } else {
+              plateInput.setCustomValidity(""); // Clear any previous error
+            }
+          } catch (error) {
+            console.error("Error al verificar la placa:", error);
+            plateInput.setCustomValidity(
+              "No se pudo verificar la placa. Intente nuevamente más tarde."
+            );
+          }
+        } else {
+          plateInput.setCustomValidity(""); // Clear validation for short inputs
+        }
+
+        plateInput.reportValidity(); // Show validation message
+      });
+
+      document
+        .getElementById("serviceForm")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault();
+
+          const plate = document.getElementById("plate").value.toUpperCase();
+
+          try {
+            const response = await fetch(`/cars/check/${plate}`);
+            if (!response.ok) {
+              throw new Error(`Error del servidor: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (!data.exists) {
+              const confirmRegister = confirm(
+                `La placa ${plate} no está registrada. ¿Desea registrar un nuevo vehículo?`
+              );
+              if (confirmRegister) {
+                const vehicleData = {
+                  plate,
+                  brand: prompt("Ingrese la marca del vehículo:").toUpperCase(),
+                  model: prompt(
+                    "Ingrese el modelo del vehículo:"
+                  ).toUpperCase(),
+                  owner: prompt(
+                    "Ingrese el nombre del propietario:"
+                  ).toUpperCase(),
+                  phone: prompt("Ingrese el teléfono del propietario:"),
+                };
+
+                const registerResponse = await fetch(`/cars/register`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(vehicleData),
+                });
+
+                if (!registerResponse.ok) {
+                  throw new Error(
+                    `Error del servidor al registrar el vehículo: ${registerResponse.status}`
+                  );
+                }
+
+                alert("Vehículo registrado exitosamente.");
+                window.location.href = `cars.html?plate=${plate}`;
+              }
+            } else {
+              // Simulate service registration
+              const serviceData = {
+                plate,
+                work: document.getElementById("work").value.toUpperCase(),
+                cost: document.getElementById("cost").value,
+              };
+
+              const registerResponse = await fetch(`/services/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(serviceData),
+              });
+
+              if (!registerResponse.ok) {
+                throw new Error(
+                  `Error del servidor: ${registerResponse.status}`
+                );
+              }
+
+              alert("Servicio registrado exitosamente.");
+              window.location.href = "index.html"; // Redirect after successful registration
+            }
+          } catch (error) {
+            console.error("Error al registrar el servicio o vehículo:", error);
+            alert(
+              `No se pudo completar la operación. Detalles del error: ${error.message}`
+            );
+          }
+        });
+    </script>
+  </body>
+</html>

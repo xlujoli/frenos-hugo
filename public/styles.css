@@ -1,0 +1,164 @@
+/* General Styles */
+body {
+  font-family: "Roboto", sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #e9ecef;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* Header */
+header {
+  background-color: #212529;
+  color: #fff;
+  padding: 1rem 0;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2.5rem;
+}
+
+nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+nav ul li {
+  display: inline;
+}
+
+nav ul li a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+nav ul li a:hover {
+  background-color: #495057;
+}
+
+/* Main Content */
+main {
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 160px);
+}
+
+main h3 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  color: #444;
+}
+
+main p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #666;
+}
+
+/* Form Styles */
+form.card {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+}
+
+form.card label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+form.card input,
+form.card textarea,
+form.card button {
+  width: 100%;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+form.card input:focus,
+form.card textarea:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+form.card button {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+form.card button:hover {
+  background-color: #0056b3;
+}
+
+/* Footer */
+footer {
+  background-color: #212529;
+  color: #fff;
+  text-align: center;
+  padding: 1rem 0;
+  font-size: 0.9rem;
+  margin-top: 2rem;
+}
+
+/* Styles for the results table */
+.results-table {
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: collapse; /* Remove spacing between borders */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+}
+
+.results-table th,
+.results-table td {
+  border: 1px solid #ddd; /* Light grey border */
+  padding: 12px 15px; /* Add padding inside cells */
+  text-align: left; /* Align text to the left */
+}
+
+.results-table th {
+  background-color: #f2f2f2; /* Light grey background for headers */
+  font-weight: bold;
+  color: #333;
+}
+
+.results-table tr:nth-child(even) {
+  background-color: #f9f9f9; /* Zebra striping for even rows */
+}
+
+.results-table tr:hover {
+  background-color: #f1f1f1; /* Highlight row on hover */
+}
+
+/* Style for the results container */
+#results {
+  margin-top: 20px;
+}

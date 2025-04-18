@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frenos Hugo - Cars</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Frenos Hugo - Car Registration</h1>
+    </header>
+    <main>
+        <form action="/cars" method="POST">
+            <label for="licensePlate">License Plate:</label>
+            <input type="text" id="licensePlate" name="licensePlate" required>
+
+            <label for="brand">Brand:</label>
+            <input type="text" id="brand" name="brand" required>
+
+            <label for="model">Model:</label>
+            <input type="text" id="model" name="model" required>
+
+            <label for="owner">Owner:</label>
+            <input type="text" id="owner" name="owner" required>
+
+            <label for="phone">Phone Number:</label>
+            <input type="text" id="phone" name="phone" required>
+
+            <button type="submit">Register Car</button>
+        </form>
+    </main>
+    <footer>
+        <p>&copy; 2023 Frenos Hugo</p>
+    </footer>
+</body>
+</html>
