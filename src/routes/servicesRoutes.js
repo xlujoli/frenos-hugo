@@ -63,7 +63,7 @@ router.post("/register", (req, res) => {
           day: "numeric",
         });
 
-        const messageBody = `Hola! Se ha registrado un nuevo servicio para tu vehículo con placa ${upperCasePlate} el ${messageDate}:\n\nTrabajo: ${serviceParams[1]}\nTotal: ${serviceParams[2]}\n\nGracias por confiar en Frenos Hugo.`; // Changed Costo to Total
+        const messageBody = `Hola! Se ha registrado un nuevo servicio para tu vehículo con placa ${upperCasePlate} el ${messageDate}:\n\nTrabajo: ${serviceParams[1]}\nTotal: $${serviceParams[2]}\n\nGracias por confiar en Frenos Hugo.`; // Changed Costo to Total
 
         twilioClient.messages
           .create({
