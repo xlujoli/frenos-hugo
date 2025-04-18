@@ -44,13 +44,26 @@ app.post("/cars/register", (req, res) => {
       .send({ message: "Todos los campos son obligatorios." });
   }
 
+  // Prepend +57 if not already present
+  let formattedPhone = phone.trim(); // Remove leading/trailing whitespace
+  if (!formattedPhone.startsWith('+')) {
+    // If it doesn't start with +, assume it needs the country code
+    formattedPhone = '+57' + formattedPhone.replace(/\s+/g, ''); // Remove internal spaces too
+  } else if (formattedPhone.startsWith('+57')) {
+    // If it already starts with +57, just remove internal spaces
+    formattedPhone = '+57' + formattedPhone.substring(3).replace(/\s+/g, '');
+  } else {
+    // If it starts with a different +, just remove internal spaces
+    formattedPhone = formattedPhone.replace(/\s+/g, '');
+  }
+
   const query = `INSERT INTO cars (plate, brand, model, owner, phone) VALUES (?, ?, ?, ?, ?)`;
   const params = [
     plate.toUpperCase(),
     brand.toUpperCase(),
     model.toUpperCase(),
     owner.toUpperCase(),
-    phone.toUpperCase(),
+    formattedPhone, // Use the formatted phone number
   ];
 
   db.run(query, params, function (err) {
