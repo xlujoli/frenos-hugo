@@ -27,9 +27,10 @@ app.use((req, res, next) => {
 });
 
 // Rutas
-const carsRoutes = require("./src/routes/carsRoutes");
-const servicesRoutes = require("./src/routes/servicesRoutes");
-const consultationRoutes = require("./src/routes/consultationRoutes");
+// Pass the db connection to the routes function
+const carsRoutes = require("./src/routes/carsRoutes")(db);
+const servicesRoutes = require("./src/routes/servicesRoutes"); // Assuming this might need db too, adjust if necessary
+const consultationRoutes = require("./src/routes/consultationRoutes"); // Assuming this might need db too, adjust if necessary
 
 app.use("/cars", carsRoutes);
 app.use("/services", servicesRoutes);
@@ -46,15 +47,15 @@ app.post("/cars/register", (req, res) => {
 
   // Prepend +57 if not already present
   let formattedPhone = phone.trim(); // Remove leading/trailing whitespace
-  if (!formattedPhone.startsWith('+')) {
+  if (!formattedPhone.startsWith("+")) {
     // If it doesn't start with +, assume it needs the country code
-    formattedPhone = '+57' + formattedPhone.replace(/\s+/g, ''); // Remove internal spaces too
-  } else if (formattedPhone.startsWith('+57')) {
+    formattedPhone = "+57" + formattedPhone.replace(/\s+/g, ""); // Remove internal spaces too
+  } else if (formattedPhone.startsWith("+57")) {
     // If it already starts with +57, just remove internal spaces
-    formattedPhone = '+57' + formattedPhone.substring(3).replace(/\s+/g, '');
+    formattedPhone = "+57" + formattedPhone.substring(3).replace(/\s+/g, "");
   } else {
     // If it starts with a different +, just remove internal spaces
-    formattedPhone = formattedPhone.replace(/\s+/g, '');
+    formattedPhone = formattedPhone.replace(/\s+/g, "");
   }
 
   const query = `INSERT INTO cars (plate, brand, model, owner, phone) VALUES (?, ?, ?, ?, ?)`;
@@ -84,13 +85,11 @@ app.post("/cars/register", (req, res) => {
     }
 
     // Return the registered plate in the success response
-    res
-      .status(201)
-      .send({
-        message: "Vehículo registrado exitosamente.",
-        id: this.lastID,
-        plate: params[0],
-      }); // Added plate to response
+    res.status(201).send({
+      message: "Vehículo registrado exitosamente.",
+      id: this.lastID,
+      plate: params[0],
+    }); // Added plate to response
   });
 });
 

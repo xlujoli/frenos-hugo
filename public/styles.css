@@ -162,3 +162,214 @@ footer {
 #results {
   margin-top: 20px;
 }
+
+/* Consultation Page Specific Styles */
+.consultation-container {
+  max-width: 600px; /* Or your preferred max width */
+  margin: 20px auto;
+  padding: 20px;
+}
+
+.search-criteria {
+  display: flex; /* Arrange label and select side-by-side */
+  align-items: center; /* Vertically align items */
+  margin-bottom: 15px; /* Space below the dropdown */
+  gap: 10px; /* Space between label and select */
+}
+
+.search-criteria label {
+  /* font-weight: bold; */ /* Optional: make label bold */
+  white-space: nowrap; /* Prevent label from wrapping */
+  margin-bottom: 0; /* Override default label margin if needed */
+}
+
+.search-criteria select {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  flex-grow: 1; /* Allow select to take available space */
+  /* Add other styles like font-size, background-color if desired */
+}
+
+/* Adjust the main search input margin if needed */
+#searchValue {
+  margin-bottom: 15px; /* Ensure consistent spacing */
+}
+
+/* Results Table Styles (if not already styled) */
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.results-table th,
+.results-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.results-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.results-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.error-message {
+  color: #d9534f; /* Bootstrap danger color */
+  background-color: #f2dede;
+  border: 1px solid #ebccd1;
+  padding: 10px;
+  border-radius: 4px;
+  margin-top: 15px;
+}
+
+/* Consultation Results Card Styles */
+.service-card-result {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  margin-bottom: 20px; /* Space between cards */
+}
+
+.service-card-result h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.4rem;
+  color: #0056b3; /* Darker blue for main title */
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.service-card-result .card-section {
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px dashed #eee; /* Dashed separator */
+}
+
+.service-card-result .card-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none; /* No border for the last section */
+}
+
+.service-card-result h5 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.service-card-result p {
+  margin: 5px 0;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.service-card-result p strong {
+  color: #333;
+  min-width: 80px; /* Align labels slightly */
+  display: inline-block;
+}
+
+.service-card-result pre.work-details {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 10px;
+  white-space: pre-wrap; /* Allow text to wrap */
+  word-wrap: break-word; /* Break long words */
+  font-family: inherit; /* Use the same font as the rest */
+  font-size: 0.9rem;
+  color: #444;
+  margin-top: 5px;
+}
+
+/* Invoice Section Styles */
+#invoice-items-container {
+  margin-bottom: 10px;
+  border: 1px solid #eee;
+  padding: 15px;
+  border-radius: 5px;
+  background-color: #fdfdfd;
+}
+
+#invoice-items-container label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.invoice-item-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.invoice-item-detail {
+  flex-grow: 3; /* Give more space to detail */
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.invoice-item-value {
+  flex-grow: 1;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-align: right;
+}
+
+.remove-invoice-item-btn {
+  padding: 4px 8px;
+  background-color: #dc3545; /* Red */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  line-height: 1; /* Adjust for better vertical alignment */
+}
+
+.remove-invoice-item-btn:hover {
+  background-color: #c82333;
+}
+
+#add-invoice-item-btn {
+  width: auto; /* Don't make it full width */
+  padding: 8px 15px;
+  margin-bottom: 15px;
+  background-color: #28a745; /* Green */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#add-invoice-item-btn:hover {
+  background-color: #218838;
+}
+
+#invoice-total-container {
+  margin-top: 15px;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  text-align: right;
+  padding-top: 10px;
+  border-top: 2px solid #eee;
+}
+
+#invoice-total {
+  font-weight: bold;
+  color: #0056b3;
+}

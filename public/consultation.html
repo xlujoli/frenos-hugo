@@ -20,125 +20,178 @@
     </header>
     <main>
       <div class="consultation-container">
-        <!-- Added container div -->
-        <form class="card" action="/consult-service" method="GET">
+        <form class="card" id="consultationForm">
           <h3>Consulta de Servicios</h3>
-          <label for="plate">Placa:</label>
+
+          <!-- Search Type Selection - Dropdown -->
+          <div class="search-criteria">
+            <label for="searchTypeSelect">Buscar por:</label>
+            <select id="searchTypeSelect" name="searchType">
+              <option value="plate" selected>Placa</option>
+              <option value="workOrder">Orden de Trabajo</option>
+            </select>
+          </div>
+
+          <!-- Input Field -->
+          <!-- Label removed as it's combined above -->
           <input
             type="text"
-            id="plate"
-            name="plate"
+            id="searchValue"
+            name="searchValue"
             style="text-transform: uppercase"
             required
+            placeholder="Ingrese la placa"
           />
+          <!-- Corrected the input tag structure to be a single, well-formed tag -->
 
           <button type="submit">Consultar</button>
         </form>
         <div id="results"></div>
       </div>
-      <!-- Close container div -->
     </main>
     <footer>
       <p>&copy; 2025 Frenos Hugo. All rights reserved.</p>
     </footer>
     <script>
-      document
-        .querySelector("form")
-        .addEventListener("submit", async function (event) {
-          event.preventDefault(); // Prevent default form submission
+      const consultationForm = document.getElementById("consultationForm");
+      const searchTypeSelect = document.getElementById("searchTypeSelect"); // Get select element
+      const searchInput = document.getElementById("searchValue");
 
-          const plate = document.getElementById("plate").value;
-          console.log(
-            `Frontend: Attempting to fetch services for plate: ${plate}`
-          ); // <-- Add this log
+      // Update input type and style based on dropdown selection
+      searchTypeSelect.addEventListener("change", function () {
+        if (this.value === "plate") {
+          searchInput.type = "text";
+          searchInput.style.textTransform = "uppercase";
+          searchInput.placeholder = "Ingrese la placa";
+        } else {
+          // workOrder
+          searchInput.type = "number";
+          searchInput.style.textTransform = "none";
+          searchInput.placeholder = "Ingrese el número de orden";
+        }
+        searchInput.value = ""; // Clear input on type change
+        searchInput.focus();
+      });
 
-          try {
-            const response = await fetch(
-              `/consultation/consult-service?plate=${plate}`
-            );
+      consultationForm.addEventListener("submit", async function (event) {
+        event.preventDefault(); // Prevent default form submission
 
-            if (!response.ok) {
-              let errorMessage = "Error al consultar servicios."; // Default message
-              try {
-                // Try to get specific message from backend
-                const errorData = await response.json();
-                errorMessage =
-                  errorData.message ||
-                  `Error ${response.status}: ${response.statusText}`;
-              } catch (parseError) {
-                // If backend error response is not JSON
-                errorMessage = `Error ${response.status}: ${response.statusText}. No se pudo obtener más detalle.`;
-              }
-              alert(errorMessage);
-              return;
+        const selectedType = searchTypeSelect.value; // Get value from select
+        let searchValue = searchInput.value; // Use let to allow modification
+
+        // Basic validation
+        if (!searchValue) {
+          alert("Por favor, ingrese un valor para buscar.");
+          return;
+        }
+
+        let fetchUrl = "/consultation/consult-service?";
+        if (selectedType === "plate") {
+          // Convert to uppercase *before* encoding and sending
+          searchValue = searchValue.toUpperCase();
+          fetchUrl += `plate=${encodeURIComponent(searchValue)}`;
+        } else {
+          // workOrder
+          fetchUrl += `workOrder=${encodeURIComponent(searchValue)}`;
+        }
+
+        console.log(
+          `Frontend: Attempting to fetch services using URL: ${fetchUrl}`
+        );
+
+        try {
+          const response = await fetch(fetchUrl);
+
+          if (!response.ok) {
+            let errorMessage = "Error al consultar servicios."; // Default message
+            try {
+              const errorData = await response.json();
+              errorMessage =
+                errorData.message ||
+                `Error ${response.status}: ${response.statusText}`;
+            } catch (parseError) {
+              errorMessage = `Error ${response.status}: ${response.statusText}. No se pudo obtener más detalle.`;
             }
-
-            const services = await response.json();
-
-            // Sort services by date (descending - most recent first)
-            services.sort((a, b) => new Date(b.date) - new Date(a.date));
-
             const resultsContainer = document.getElementById("results");
-            resultsContainer.innerHTML = "<h3>Resultados:</h3>";
+            resultsContainer.innerHTML = `<p class="error-message">${errorMessage}</p>`;
+            return;
+          }
 
-            if (services.length === 0) {
-              resultsContainer.innerHTML +=
-                "<p>No se encontraron servicios para esta placa.</p>";
-              return;
+          const services = await response.json();
+
+          // No need to sort here if backend already sorts by date DESC
+          // services.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+          const resultsContainer = document.getElementById("results");
+          resultsContainer.innerHTML = "<h3>Resultados:</h3>"; // Clear previous results and add title
+
+          if (services.length === 0) {
+            resultsContainer.innerHTML +=
+              "<p>No se encontraron servicios para el criterio de búsqueda.</p>";
+            return;
+          }
+
+          // --- Display results as cards ---
+          services.forEach((service) => {
+            const card = document.createElement("div");
+            card.classList.add("service-card-result"); // Use a specific class for result cards
+
+            // Format date
+            let formattedDate = "N/A";
+            if (service.date) {
+              const dateObj = new Date(service.date);
+              const weekday = dateObj.toLocaleDateString("es-ES", {
+                weekday: "long",
+              });
+              const day = dateObj.getDate();
+              const month = dateObj.getMonth() + 1;
+              const year = dateObj.getFullYear();
+              formattedDate = `${day}/${month}/${year} (${weekday})`; // Simplified format
             }
 
-            // Create table
-            const table = document.createElement("table");
-            table.classList.add("results-table"); // Optional: Add a class for styling
+            // Format cost as currency (optional, example using Colombian Peso)
+            const formattedCost = new Intl.NumberFormat("es-CO", {
+              style: "currency",
+              currency: "COP",
+            }).format(service.cost || 0);
 
-            // Create table header
-            const thead = table.createTHead();
-            const headerRow = thead.insertRow();
-            const headers = ["Fecha", "Trabajo", "Total"]; // Changed Costo to Total
-            headers.forEach((headerText) => {
-              const th = document.createElement("th");
-              th.textContent = headerText;
-              headerRow.appendChild(th);
-            });
+            card.innerHTML = `
+              <h4>Servicio #${
+                service.workOrder || "N/A"
+              } - ${formattedDate}</h4>
+              <div class="card-section">
+                <h5>Vehículo</h5>
+                <p><strong>Placa:</strong> ${service.plate}</p>
+                <p><strong>Marca:</strong> ${service.brand || "N/A"}</p>
+                <p><strong>Modelo:</strong> ${service.model || "N/A"}</p>
+              </div>
+              <div class="card-section">
+                <h5>Propietario</h5>
+                <p><strong>Nombre:</strong> ${service.owner || "N/A"}</p>
+                <p><strong>Teléfono:</strong> ${service.phone || "N/A"}</p>
+              </div>
+              <div class="card-section">
+                <h5>Detalles del Servicio</h5>
+                <p><strong>Trabajo Realizado:</strong></p>
+                <pre class="work-details">${service.work || "N/A"}</pre> 
+                <p><strong>Total:</strong> ${formattedCost}</p>
+              </div>
+            `;
+            resultsContainer.appendChild(card);
+          });
 
-            // Create table body
-            const tbody = table.createTBody();
-            services.forEach((service) => {
-              const row = tbody.insertRow();
-
-              // Changed order of cell creation and population
-              const cellDate = row.insertCell();
-              // Format date as Day/Month/Year-Weekday
-              let formattedDate = "N/A";
-              if (service.date) {
-                const dateObj = new Date(service.date);
-                const weekday = dateObj.toLocaleDateString("es-ES", {
-                  weekday: "long",
-                }); // Get weekday name in Spanish
-                const day = dateObj.getDate();
-                const month = dateObj.getMonth() + 1; // Month is 0-indexed
-                const year = dateObj.getFullYear();
-                // Changed the order in the template literal
-                formattedDate = `${day}/${month}/${year}-${weekday}`;
-              }
-              cellDate.textContent = formattedDate;
-
-              const cellWork = row.insertCell();
-              cellWork.textContent = service.work;
-
-              const cellCost = row.insertCell();
-              cellCost.textContent = service.cost; // Consider formatting as currency if needed
-            });
-
-            resultsContainer.appendChild(table);
-          } catch (error) {
-            // Network errors, etc.
-            console.error("Error de red o al procesar la solicitud:", error);
-            alert(
-              "No se pudo conectar con el servidor o procesar la respuesta. Intente nuevamente."
-            );
-          }
-        });
+          // Remove the old table creation logic
+          /*
+          const table = document.createElement("table");
+          // ... rest of old table code ...
+          resultsContainer.appendChild(table);
+          */
+        } catch (error) {
+          console.error("Error de red o al procesar la solicitud:", error);
+          const resultsContainer = document.getElementById("results");
+          resultsContainer.innerHTML = `<p class="error-message">No se pudo conectar con el servidor o procesar la respuesta. Intente nuevamente.</p>`;
+        }
+      });
     </script>
   </body>
 </html>

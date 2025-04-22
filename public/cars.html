@@ -71,9 +71,11 @@
       const form = document.getElementById("car-registration-form");
       const messageArea = document.getElementById("message-area");
 
-      // Pre-fill plate from URL if present (from service registration failure)
+      // Pre-fill plate and get workOrder from URL
       const urlParams = new URLSearchParams(window.location.search);
       const plateFromUrl = urlParams.get("plate");
+      const workOrderFromUrl = urlParams.get("workOrder"); // Get workOrder
+
       if (plateFromUrl) {
         document.getElementById("plate").value = plateFromUrl;
       }
@@ -99,8 +101,18 @@
           if (response.ok) {
             // Status 201 Created
             alert(responseData.message); // Show success message
-            // Redirect to index.html with the new plate
-            window.location.href = `index.html?plate=${responseData.plate}`; // Changed services.html to index.html
+
+            // Redirect to index.html including plate and workOrder (if it exists)
+            let redirectUrl = `index.html?plate=${encodeURIComponent(
+              responseData.plate
+            )}`;
+            if (workOrderFromUrl) {
+              // Check if workOrder was passed initially
+              redirectUrl += `&workOrder=${encodeURIComponent(
+                workOrderFromUrl
+              )}`;
+            }
+            window.location.href = redirectUrl;
           } else {
             // Handle errors (like 409 Conflict for duplicate plate)
             messageArea.textContent = `Error: ${

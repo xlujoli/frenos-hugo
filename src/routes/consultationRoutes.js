@@ -8,65 +8,59 @@ const db = new sqlite3.Database(dbPath);
 
 // Ruta específica primero
 router.get("/consult-service", (req, res) => {
-  const { plate } = req.query;
-  console.log(`Received plate query parameter: ${plate}`); // Log received plate
+  const { plate, workOrder } = req.query;
+  // Select columns explicitly and join with cars table
+  let query = `
+    SELECT 
+      s.id, s.workOrder, s.plate, s.work, s.cost, s.date, 
+      c.brand, c.model, c.owner, c.phone 
+    FROM services s 
+    LEFT JOIN cars c ON s.plate = c.plate 
+    WHERE`;
+  let params = [];
+  let searchCriteria = "";
 
-  if (!plate) {
-    console.log("Plate query parameter is missing.");
-    return res.status(400).send({ message: "La placa es obligatoria." });
+  if (plate) {
+    const upperCasePlate = plate.toUpperCase();
+    query += " s.plate = ?"; // Specify table alias 's'
+    params.push(upperCasePlate);
+    searchCriteria = `placa ${upperCasePlate}`;
+    console.log(`Querying database for plate: ${upperCasePlate}`);
+  } else if (workOrder) {
+    query += " s.workOrder = ?"; // Specify table alias 's'
+    params.push(workOrder);
+    searchCriteria = `orden de trabajo ${workOrder}`;
+    console.log(`Querying database for workOrder: ${workOrder}`);
+  } else {
+    console.log("Search parameter (plate or workOrder) is missing.");
+    return res
+      .status(400)
+      .send({
+        message: "Se requiere placa u orden de trabajo para la consulta.",
+      });
   }
 
-  const upperCasePlate = plate.toUpperCase();
-  console.log(`Querying database for plate: ${upperCasePlate}`); // Log plate used in query
-  const query = `SELECT * FROM services WHERE plate = ?`;
+  // Add ordering
+  query += " ORDER BY s.date DESC";
 
-  db.all(query, [upperCasePlate], (err, rows) => {
+  db.all(query, params, (err, rows) => {
     if (err) {
-      console.error(
-        `Error querying services for plate ${plate.toUpperCase()}:`,
-        err
-      );
-      // Send a more specific server error message
+      console.error(`Error querying services for ${searchCriteria}:`, err);
       return res.status(500).send({
         message: `Error interno del servidor al consultar servicios: ${err.message}`,
       });
     }
 
-    if (rows.length === 0) {
-      return res.status(404).send({
-        message: `No se encontraron servicios para la placa ${plate.toUpperCase()}.`,
-      });
-    }
-
+    // No need for 404 here, just send the (potentially empty) array
     res.status(200).send(rows);
   });
 });
 
-// Ruta general después
+// Remove or comment out the general /:plate route if it's redundant now
+/*
 router.get("/:plate", (req, res) => {
-  const { plate } = req.params;
-  const query = `SELECT * FROM services WHERE plate = ?`;
-
-  db.all(query, [plate.toUpperCase()], (err, rows) => {
-    // Also convert to uppercase here for consistency
-    if (err) {
-      console.error(
-        `Error querying services for plate ${plate.toUpperCase()} (param):`,
-        err
-      );
-      return res
-        .status(500)
-        .json({ message: `Error interno del servidor: ${err.message}` });
-    }
-    if (rows.length === 0) {
-      return res
-        .status(404)
-        .json({
-          message: `No se encontraron servicios para la placa ${plate.toUpperCase()}.`,
-        });
-    }
-    res.json(rows);
-  });
+  // ... old code ...
 });
+*/
 
 module.exports = router;
