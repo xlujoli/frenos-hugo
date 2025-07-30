@@ -1,18 +1,40 @@
 const oracledb = require("oracledb");
 
+// Configuración avanzada para Oracle Academy
+oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+oracledb.autoCommit = true;
+
 // Configuración de la base de datos usando variables de entorno
-// Intentar múltiples formatos de conexión para Oracle Academy
 const dbConfig = {
   user: process.env.DB_USER || "CO_A851_SQL_T01_ADMIN",
   password: process.env.DB_PASSWORD || "Milagros_1",
-  connectString: process.env.DB_CONNECTION_STRING || 
+  connectString:
+    process.env.DB_CONNECTION_STRING ||
     "oracle.academy.oracle.com:1521/PDB1.gbcnnaopac01.gbcnnaopacvcn.oraclevcn.com",
+  // Configuraciones adicionales para Oracle Academy
+  poolMin: 1,
+  poolMax: 4,
+  poolIncrement: 1,
+  poolTimeout: 60,
+  connectTimeout: 60,
+  enableArrowFunction: true,
+  // Configuraciones adicionales para mejorar conectividad
+  externalAuth: false,
+  homogeneous: true,
+  privilege: oracledb.SYSDBA // Solo si es necesario
 };
+
+// Remover privilege si no es necesario (para usuarios normales)
+if (!process.env.DB_SYSDBA || process.env.DB_SYSDBA.toLowerCase() !== 'true') {
+  delete dbConfig.privilege;
+}
 
 console.log("🔗 Variables de entorno:", {
   DB_USER: process.env.DB_USER ? "✅ Configurado" : "❌ No encontrado",
-  DB_PASSWORD: process.env.DB_PASSWORD ? "✅ Configurado" : "❌ No encontrado", 
-  DB_CONNECTION_STRING: process.env.DB_CONNECTION_STRING ? "✅ Configurado" : "❌ No encontrado",
+  DB_PASSWORD: process.env.DB_PASSWORD ? "✅ Configurado" : "❌ No encontrado",
+  DB_CONNECTION_STRING: process.env.DB_CONNECTION_STRING
+    ? "✅ Configurado"
+    : "❌ No encontrado",
 });
 
 console.log("🔗 Intentando conectar con:", {
@@ -21,10 +43,55 @@ console.log("🔗 Intentando conectar con:", {
   // NO mostrar password por seguridad
 });
 
+// Pool de conexiones para mejor manejo
+let pool;
+
+async function createPool() {
+  try {
+    pool = await oracledb.createPool(dbConfig);
+    console.log("✅ Pool de conexiones Oracle creado exitosamente");
+    return pool;
+  } catch (err) {
+    console.error("❌ Error creando pool de conexiones:", err);
+    throw err;
+  }
+}
+
+// Función de conexión con reintentos
+async function connectWithRetry(maxRetries = 3, delay = 5000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 Intento de conexión ${attempt}/${maxRetries}...`);
+      
+      if (!pool) {
+        await createPool();
+      }
+      
+      const connection = await pool.getConnection();
+      console.log(`✅ Conexión exitosa en intento ${attempt}`);
+      return connection;
+    } catch (err) {
+      console.error(`❌ Intento ${attempt} falló:`, err.message);
+      
+      if (attempt === maxRetries) {
+        console.error("❌ Todos los intentos de conexión fallaron");
+        throw err;
+      }
+      
+      console.log(`⏳ Esperando ${delay/1000}s antes del siguiente intento...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+
 async function initialize() {
   let connection;
   try {
-    connection = await oracledb.getConnection(dbConfig);
+    // Crear pool primero
+    await createPool();
+    
+    // Obtener conexión del pool
+    connection = await pool.getConnection();
     console.log("Successfully connected to Oracle Database!");
 
     // Create sequences for auto-incrementing IDs
@@ -137,13 +204,31 @@ async function initialize() {
   }
 }
 
-// Export a function that returns a new connection
-// This will be used by models to get a connection from the pool
+// Export a function that returns a new connection from the pool
 async function getConnection() {
-  return oracledb.getConnection(dbConfig);
+  try {
+    return await connectWithRetry(3, 3000); // 3 intentos, 3 segundos entre cada uno
+  } catch (err) {
+    console.error("❌ Error obteniendo conexión con reintentos:", err);
+    // Último recurso: conexión directa
+    console.log("🔄 Último intento con conexión directa...");
+    return await oracledb.getConnection(dbConfig);
+  }
 }
 
-module.exports = { initialize, getConnection };
+// Función para cerrar el pool al terminar la aplicación
+async function closePool() {
+  if (pool) {
+    try {
+      await pool.close();
+      console.log("✅ Pool de conexiones cerrado");
+    } catch (err) {
+      console.error("❌ Error cerrando pool:", err);
+    }
+  }
+}
+
+module.exports = { initialize, getConnection, closePool };
 
 // Run initialization
 // initialize(); // We will call this from server.js or app.js to control startup
