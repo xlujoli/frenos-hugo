@@ -60,12 +60,10 @@ class ServicesController {
       res.status(200).json({ nextWorkOrder });
     } catch (error) {
       console.error("Error getting next work order:", error);
-      res
-        .status(500)
-        .json({
-          message: "Error al obtener el siguiente número de orden.",
-          error: error.message,
-        });
+      res.status(500).json({
+        message: "Error al obtener el siguiente número de orden.",
+        error: error.message,
+      });
     }
   };
 
@@ -79,12 +77,10 @@ class ServicesController {
       res.status(200).json({ exists: !!service });
     } catch (error) {
       console.error("Error checking workOrder existence:", error);
-      res
-        .status(500)
-        .json({
-          message: "Error interno al verificar orden de trabajo.",
-          error: error.message,
-        });
+      res.status(500).json({
+        message: "Error interno al verificar orden de trabajo.",
+        error: error.message,
+      });
     }
   };
 
@@ -93,12 +89,10 @@ class ServicesController {
 
     // Validate input
     if (!workOrder || !plate || !work || cost === undefined) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Todos los campos son obligatorios (workOrder, plate, work, cost).",
-        });
+      return res.status(400).json({
+        message:
+          "Todos los campos son obligatorios (workOrder, plate, work, cost).",
+      });
     }
     if (isNaN(parseInt(workOrder))) {
       return res
@@ -117,11 +111,9 @@ class ServicesController {
         parseInt(workOrder)
       );
       if (existingServiceByWorkOrder) {
-        return res
-          .status(409)
-          .json({
-            message: `El número de orden '${workOrder}' ya está registrado.`,
-          });
+        return res.status(409).json({
+          message: `El número de orden '${workOrder}' ya está registrado.`,
+        });
       }
 
       // Check if car exists and get phone number
@@ -191,28 +183,22 @@ class ServicesController {
         }
       }
 
-      res
-        .status(201)
-        .json({
-          message: "Servicio registrado con éxito",
-          service: newService,
-        });
+      res.status(201).json({
+        message: "Servicio registrado con éxito",
+        service: newService,
+      });
     } catch (error) {
       console.error("Error al registrar el servicio:", error);
       if (error.message.includes("parent key not found")) {
         // ORA-02291
-        return res
-          .status(404)
-          .json({
-            message: `Error de integridad: La placa '${upperCasePlate}' podría no existir o haber otro problema de referencia.`,
-          });
-      }
-      res
-        .status(500)
-        .json({
-          message: "Error interno al registrar el servicio.",
-          error: error.message,
+        return res.status(404).json({
+          message: `Error de integridad: La placa '${upperCasePlate}' podría no existir o haber otro problema de referencia.`,
         });
+      }
+      res.status(500).json({
+        message: "Error interno al registrar el servicio.",
+        error: error.message,
+      });
     }
   };
 
@@ -232,12 +218,10 @@ class ServicesController {
       res.status(200).json(services);
     } catch (error) {
       console.error("Error al consultar servicios por placa:", error);
-      res
-        .status(500)
-        .json({
-          message: "Error al consultar servicios.",
-          error: error.message,
-        });
+      res.status(500).json({
+        message: "Error al consultar servicios.",
+        error: error.message,
+      });
     }
   };
 }
@@ -250,6 +234,5 @@ module.exports = {
   getNextWorkOrder: serviceController.getNextWorkOrder,
   checkWorkOrderExists: serviceController.checkWorkOrderExists,
   registerService: serviceController.registerService,
-  getServicesByPlate: serviceController.getServicesByPlate,
-  registerServiceWithDetails: serviceController.registerServiceWithDetails
+  getServicesByPlate: serviceController.getServicesByPlate
 };
