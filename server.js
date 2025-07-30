@@ -26,11 +26,13 @@ const carsRoutes = require("./src/routes/carsRoutes"); // Export router directly
 const servicesRoutes = require("./src/routes/servicesRoutes");
 const consultationRoutes = require("./src/routes/consultationRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
+const oracleTestRoutes = require("./src/routes/oracleTestRoutes");
 
 app.use("/cars", carsRoutes);
 app.use("/services", servicesRoutes);
 app.use("/consultation", consultationRoutes);
 app.use("/admin", adminRoutes);
+app.use("/test", oracleTestRoutes);
 
 // Modify /cars/register to use Oracle DB
 app.post("/cars/register", async (req, res) => {
