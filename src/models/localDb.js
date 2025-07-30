@@ -18,7 +18,7 @@ function initLocalDb() {
   return new Promise((resolve, reject) => {
     try {
       ensureDirectoryExists();
-      
+
       const db = new sqlite3.Database(dbPath, (err) => {
         if (err) {
           console.error("❌ Error conectando a SQLite:", err);
@@ -27,11 +27,11 @@ function initLocalDb() {
         }
         console.log("✅ Conectado a SQLite local");
 
-      // Crear tablas si no existen
-      db.serialize(() => {
-        // Tabla de vehículos
-        db.run(
-          `CREATE TABLE IF NOT EXISTS cars (
+        // Crear tablas si no existen
+        db.serialize(() => {
+          // Tabla de vehículos
+          db.run(
+            `CREATE TABLE IF NOT EXISTS cars (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     plate TEXT UNIQUE NOT NULL,
                     brand TEXT NOT NULL,
@@ -40,15 +40,15 @@ function initLocalDb() {
                     phone TEXT NOT NULL,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )`,
-          (err) => {
-            if (err) console.error("Error creando tabla cars:", err);
-            else console.log("✅ Tabla cars verificada/creada");
-          }
-        );
+            (err) => {
+              if (err) console.error("Error creando tabla cars:", err);
+              else console.log("✅ Tabla cars verificada/creada");
+            }
+          );
 
-        // Tabla de servicios
-        db.run(
-          `CREATE TABLE IF NOT EXISTS services (
+          // Tabla de servicios
+          db.run(
+            `CREATE TABLE IF NOT EXISTS services (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     workOrder INTEGER,
                     plate TEXT NOT NULL,
@@ -57,24 +57,24 @@ function initLocalDb() {
                     service_date DATETIME DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (plate) REFERENCES cars (plate)
                 )`,
-          (err) => {
-            if (err) console.error("Error creando tabla services:", err);
-            else console.log("✅ Tabla services verificada/creada");
-          }
-        );
-      });
+            (err) => {
+              if (err) console.error("Error creando tabla services:", err);
+              else console.log("✅ Tabla services verificada/creada");
+            }
+          );
+        });
 
-      // Cerrar la conexión de inicialización
-      db.close((err) => {
-        if (err) {
-          console.error("Error cerrando conexión de inicialización:", err);
-          reject(err);
-        } else {
-          console.log("✅ Inicialización de SQLite completada");
-          resolve();
-        }
+        // Cerrar la conexión de inicialización
+        db.close((err) => {
+          if (err) {
+            console.error("Error cerrando conexión de inicialización:", err);
+            reject(err);
+          } else {
+            console.log("✅ Inicialización de SQLite completada");
+            resolve();
+          }
+        });
       });
-    });
     } catch (error) {
       console.error("❌ Error en initLocalDb:", error);
       reject(error);

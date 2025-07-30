@@ -16,11 +16,14 @@ app.use(express.static("public"));
 
 // Middleware de manejo de errores
 app.use((err, req, res, next) => {
-  console.error('❌ Error no manejado:', err);
+  console.error("❌ Error no manejado:", err);
   res.status(500).json({
     success: false,
-    message: 'Error interno del servidor',
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
+    message: "Error interno del servidor",
+    error:
+      process.env.NODE_ENV === "development"
+        ? err.message
+        : "Internal Server Error",
   });
 });
 
@@ -122,14 +125,14 @@ app.post("/cars/register", async (req, res) => {
 async function startServer() {
   try {
     console.log("🔄 Inicializando SQLite...");
-    await initLocalDb(); 
+    await initLocalDb();
     console.log("✅ Base de datos SQLite inicializada correctamente");
   } catch (err) {
     console.error("❌ Error inicializando SQLite:", err);
     console.log("🔄 El servidor continuará ejecutándose sin base de datos");
   }
 
-  const server = app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Servidor Frenos Hugo ejecutándose en puerto ${PORT}`);
     console.log(`📊 Base de datos: SQLite (Aplicación pública)`);
     console.log(`🔧 Administración: Oracle APEX`);
@@ -137,12 +140,12 @@ async function startServer() {
   });
 
   // Manejo de errores del servidor
-  server.on('error', (error) => {
-    if (error.code === 'EADDRINUSE') {
+  server.on("error", (error) => {
+    if (error.code === "EADDRINUSE") {
       console.error(`❌ Puerto ${PORT} está en uso`);
       process.exit(1);
     } else {
-      console.error('❌ Error del servidor:', error);
+      console.error("❌ Error del servidor:", error);
     }
   });
 }
