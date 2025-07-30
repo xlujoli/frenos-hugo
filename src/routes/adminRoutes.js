@@ -163,6 +163,7 @@ router.get("/services", async (req, res) => {
 
   try {
     connection = await getConnection();
+    console.log("✅ Conexión a BD establecida para listar servicios");
 
     const result = await connection.execute(
       `SELECT id, workOrder, plate, 
@@ -188,12 +189,29 @@ router.get("/services", async (req, res) => {
       total: services.length,
     });
   } catch (error) {
-    console.error("Error obteniendo servicios:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error interno del servidor",
-      error: error.message,
-    });
+    console.error("❌ Error obteniendo servicios:", error);
+    console.error("❌ Detalles del error:", error.message);
+    
+    // Verificar si es un error de conexión o de tabla
+    if (error.message.includes('table or view does not exist')) {
+      res.status(500).json({
+        success: false,
+        message: "Las tablas de la base de datos no existen. Verifica que se hayan creado correctamente en Oracle APEX.",
+        error: error.message,
+      });
+    } else if (error.message.includes('TNS') || error.message.includes('connection')) {
+      res.status(500).json({
+        success: false,
+        message: "No se puede conectar a la base de datos Oracle. Verifica las variables de entorno.",
+        error: error.message,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Error interno del servidor",
+        error: error.message,
+      });
+    }
   } finally {
     if (connection) {
       try {

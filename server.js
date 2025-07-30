@@ -104,13 +104,15 @@ app.post("/cars/register", async (req, res) => {
 async function startServer() {
   try {
     await initialize(); // Initialize Oracle DB schema
-    app.listen(PORT, () => {
-      console.log(`Servidor corriendo en el puerto ${PORT}`);
-    });
+    console.log("✅ Base de datos inicializada correctamente");
   } catch (err) {
-    console.error("Failed to initialize database or start server:", err);
-    process.exit(1); // Exit if DB initialization fails
+    console.error("❌ Error inicializando base de datos:", err);
+    console.log("🔄 El servidor continuará ejecutándose, pero las funciones de BD pueden fallar");
   }
+  
+  app.listen(PORT, () => {
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
+  });
 }
 
 startServer();
