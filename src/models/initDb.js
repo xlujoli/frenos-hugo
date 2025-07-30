@@ -4,7 +4,8 @@ const oracledb = require("oracledb");
 const dbConfig = {
   user: process.env.DB_USER || "CO_A851_SQL_T01_ADMIN",
   password: process.env.DB_PASSWORD || "Milagros_1",
-  connectString: process.env.DB_CONNECTION_STRING || 
+  connectString:
+    process.env.DB_CONNECTION_STRING ||
     "oracle.academy.oracle.com:1521/PDB1.gbcnnaopac01.gbcnnaopacvcn.oraclevcn.com",
 };
 

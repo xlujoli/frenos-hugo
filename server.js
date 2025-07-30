@@ -1,7 +1,7 @@
 console.log("--- Executing frenos-hugo/server.js ---");
 
 // Cargar variables de entorno
-require('dotenv').config();
+require("dotenv").config();
 
 const express = require("express");
 const path = require("path");
