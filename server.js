@@ -107,9 +107,11 @@ async function startServer() {
     console.log("✅ Base de datos inicializada correctamente");
   } catch (err) {
     console.error("❌ Error inicializando base de datos:", err);
-    console.log("🔄 El servidor continuará ejecutándose, pero las funciones de BD pueden fallar");
+    console.log(
+      "🔄 El servidor continuará ejecutándose, pero las funciones de BD pueden fallar"
+    );
   }
-  
+
   app.listen(PORT, () => {
     console.log(`Servidor corriendo en el puerto ${PORT}`);
   });

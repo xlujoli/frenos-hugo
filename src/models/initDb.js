@@ -1,12 +1,19 @@
 const oracledb = require("oracledb");
 
 // Configuración de la base de datos usando variables de entorno
+// Intentar múltiples formatos de conexión para Oracle Academy
 const dbConfig = {
   user: process.env.DB_USER || "CO_A851_SQL_T01_ADMIN",
   password: process.env.DB_PASSWORD || "Milagros_1",
   connectString: process.env.DB_CONNECTION_STRING || 
-    "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=oracle.academy.oracle.com)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=PDB1.gbcnnaopac01.gbcnnaopacvcn.oraclevcn.com)))",
+    "oracle.academy.oracle.com:1521/PDB1.gbcnnaopac01.gbcnnaopacvcn.oraclevcn.com",
 };
+
+console.log("🔗 Variables de entorno:", {
+  DB_USER: process.env.DB_USER ? "✅ Configurado" : "❌ No encontrado",
+  DB_PASSWORD: process.env.DB_PASSWORD ? "✅ Configurado" : "❌ No encontrado", 
+  DB_CONNECTION_STRING: process.env.DB_CONNECTION_STRING ? "✅ Configurado" : "❌ No encontrado",
+});
 
 console.log("🔗 Intentando conectar con:", {
   user: dbConfig.user,

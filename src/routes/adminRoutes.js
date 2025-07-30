@@ -191,18 +191,23 @@ router.get("/services", async (req, res) => {
   } catch (error) {
     console.error("❌ Error obteniendo servicios:", error);
     console.error("❌ Detalles del error:", error.message);
-    
+
     // Verificar si es un error de conexión o de tabla
-    if (error.message.includes('table or view does not exist')) {
+    if (error.message.includes("table or view does not exist")) {
       res.status(500).json({
         success: false,
-        message: "Las tablas de la base de datos no existen. Verifica que se hayan creado correctamente en Oracle APEX.",
+        message:
+          "Las tablas de la base de datos no existen. Verifica que se hayan creado correctamente en Oracle APEX.",
         error: error.message,
       });
-    } else if (error.message.includes('TNS') || error.message.includes('connection')) {
+    } else if (
+      error.message.includes("TNS") ||
+      error.message.includes("connection")
+    ) {
       res.status(500).json({
         success: false,
-        message: "No se puede conectar a la base de datos Oracle. Verifica las variables de entorno.",
+        message:
+          "No se puede conectar a la base de datos Oracle. Verifica las variables de entorno.",
         error: error.message,
       });
     } else {
