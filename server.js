@@ -5,7 +5,7 @@ require("dotenv").config();
 
 const express = require("express");
 const path = require("path");
-const { initialize, getConnection } = require("./src/models/initDb"); // Import Oracle DB functions
+const { initLocalDb } = require("./src/models/localDb"); // Import SQLite DB functions
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,19 +20,25 @@ app.use((req, res, next) => {
   next(); // Pasa la solicitud al siguiente middleware/ruta
 });
 
-// Rutas
-// Adjust how routes are loaded, they will use getConnection internally from models
-const carsRoutes = require("./src/routes/carsRoutes"); // Export router directly
-const servicesRoutes = require("./src/routes/servicesRoutes");
-const consultationRoutes = require("./src/routes/consultationRoutes");
-const adminRoutes = require("./src/routes/adminRoutes");
-const oracleTestRoutes = require("./src/routes/oracleTestRoutes");
+// Rutas públicas (solo para usuarios finales) - Usando SQLite
+const carsRoutes = require("./src/routes/carsRoutes_sqlite"); 
+const servicesRoutes = require("./src/routes/servicesRoutes_sqlite");
+const consultationRoutes = require("./src/routes/consultationRoutes_sqlite");
 
 app.use("/cars", carsRoutes);
 app.use("/services", servicesRoutes);
 app.use("/consultation", consultationRoutes);
-app.use("/admin", adminRoutes);
-app.use("/test", oracleTestRoutes);
+
+// Ruta de información
+app.get("/info", (req, res) => {
+  res.json({
+    app: "Frenos Hugo",
+    version: "2.0.0 - Híbrido",
+    database: "SQLite (Público)",
+    admin: "Disponible en Oracle APEX",
+    status: "✅ Funcionando"
+  });
+});
 
 // Modify /cars/register to use Oracle DB
 app.post("/cars/register", async (req, res) => {
@@ -102,21 +108,24 @@ app.post("/cars/register", async (req, res) => {
   }
 });
 
-// Iniciar servidor after DB initialization
+// Iniciar servidor con SQLite
 async function startServer() {
   try {
-    await initialize(); // Initialize Oracle DB schema
-    console.log("✅ Base de datos inicializada correctamente");
+    await initLocalDb(); // Initialize SQLite database
+    console.log("✅ Base de datos SQLite inicializada correctamente");
   } catch (err) {
-    console.error("❌ Error inicializando base de datos:", err);
-    console.log(
-      "🔄 El servidor continuará ejecutándose, pero las funciones de BD pueden fallar"
-    );
+    console.error("❌ Error inicializando SQLite:", err);
+    console.log("🔄 El servidor continuará ejecutándose sin base de datos");
   }
 
   app.listen(PORT, () => {
-    console.log(`Servidor corriendo en el puerto ${PORT}`);
+    console.log(`🚀 Servidor Frenos Hugo ejecutándose en puerto ${PORT}`);
+    console.log(`📊 Base de datos: SQLite (Aplicación pública)`);
+    console.log(`🔧 Administración: Oracle APEX`);
+    console.log(`🌐 URL: http://localhost:${PORT}`);
   });
 }
+
+startServer();
 
 startServer();
