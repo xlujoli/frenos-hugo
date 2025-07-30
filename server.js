@@ -1,4 +1,8 @@
 console.log("--- Executing frenos-hugo/server.js ---");
+
+// Cargar variables de entorno
+require('dotenv').config();
+
 const express = require("express");
 const path = require("path");
 const { initialize, getConnection } = require("./src/models/initDb"); // Import Oracle DB functions

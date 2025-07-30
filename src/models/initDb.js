@@ -1,9 +1,11 @@
 const oracledb = require("oracledb");
+
+// Configuración de la base de datos usando variables de entorno
 const dbConfig = {
-  user: "CO_A851_SQL_T01_ADMIN",
-  password: "Milagros_1",
-  connectString:
-    "oracle.academy.oracle.com:1521/PDB1.gbcnnaopac01.gbcnnaopacvcn.oraclevcn.com", // Replace with your actual connect string if different
+  user: process.env.DB_USER || "CO_A851_SQL_T01_ADMIN",
+  password: process.env.DB_PASSWORD || "Milagros_1",
+  connectString: process.env.DB_CONNECTION_STRING || 
+    "oracle.academy.oracle.com:1521/PDB1.gbcnnaopac01.gbcnnaopacvcn.oraclevcn.com",
 };
 
 async function initialize() {
