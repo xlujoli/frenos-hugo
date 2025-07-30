@@ -18,7 +18,7 @@ app.use((req, res, next) => {
 
 // Rutas
 // Adjust how routes are loaded, they will use getConnection internally from models
-const carsRoutes = require("./src/routes/carsRoutes")(/*db*/); // db object no longer passed directly
+const carsRoutes = require("./src/routes/carsRoutes"); // Export router directly
 const servicesRoutes = require("./src/routes/servicesRoutes");
 const consultationRoutes = require("./src/routes/consultationRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
