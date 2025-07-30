@@ -239,7 +239,9 @@
           event.preventDefault();
           checkPlateExistence();
           // Find the first detail input in the invoice section and focus it
-          const firstDetailInput = invoiceItemsContainer.querySelector(".invoice-item-detail");
+          const firstDetailInput = invoiceItemsContainer.querySelector(
+            ".invoice-item-detail"
+          );
           if (firstDetailInput) {
             firstDetailInput.focus();
           }
@@ -451,7 +453,7 @@
             return; // Stop submission if the final plate check failed
           }
 
-          // --- Gather Invoice Data --- 
+          // --- Gather Invoice Data ---
           const invoiceRows =
             invoiceItemsContainer.querySelectorAll(".invoice-item-row");
           let workDescription = "";
@@ -474,22 +476,36 @@
 
             // If it's the *only* row and it's empty, it's an error
             if (invoiceRows.length === 1 && isRowEffectivelyEmpty) {
-                firstInvalidRow = { input: detailInput, message: "Por favor, añada al menos un detalle de servicio con un valor válido." };
-                return; // Stop processing this row
+              firstInvalidRow = {
+                input: detailInput,
+                message:
+                  "Por favor, añada al menos un detalle de servicio con un valor válido.",
+              };
+              return; // Stop processing this row
             }
             // If it's *not* the only row and it's effectively empty, just ignore it
             else if (isRowEffectivelyEmpty && invoiceRows.length > 1) {
-                return; // Skip processing this empty row
+              return; // Skip processing this empty row
             }
 
             // --- Validate non-empty rows ---
             if (!detail) {
-              firstInvalidRow = { input: detailInput, message: `Por favor, ingrese un detalle para el ítem ${index + 1}.` };
+              firstInvalidRow = {
+                input: detailInput,
+                message: `Por favor, ingrese un detalle para el ítem ${
+                  index + 1
+                }.`,
+              };
               return; // Stop processing this row
             }
             // Check if value is empty, not a number, or negative (allow 0 if detail exists)
-            if (!valueStr || isNaN(value) || value < 0) { 
-              firstInvalidRow = { input: valueInput, message: `Por favor, ingrese un valor válido (mayor o igual a 0) para el ítem ${index + 1}.` };
+            if (!valueStr || isNaN(value) || value < 0) {
+              firstInvalidRow = {
+                input: valueInput,
+                message: `Por favor, ingrese un valor válido (mayor o igual a 0) para el ítem ${
+                  index + 1
+                }.`,
+              };
               return; // Stop processing this row
             }
 
@@ -504,18 +520,18 @@
 
           // Check if there was any validation error during the loop
           if (firstInvalidRow) {
-              alert(firstInvalidRow.message);
-              firstInvalidRow.input.focus();
-              return; // Stop submission
+            alert(firstInvalidRow.message);
+            firstInvalidRow.input.focus();
+            return; // Stop submission
           }
 
           // Check if at least one valid item was found after the loop
           if (validItemsCount === 0) {
-            alert(
-              "Por favor, añada al menos un detalle de servicio válido."
-            );
+            alert("Por favor, añada al menos un detalle de servicio válido.");
             // Focus on the first detail input if available
-            const firstDetail = invoiceItemsContainer.querySelector(".invoice-item-detail");
+            const firstDetail = invoiceItemsContainer.querySelector(
+              ".invoice-item-detail"
+            );
             if (firstDetail) firstDetail.focus();
             return; // Stop if no valid items
           }

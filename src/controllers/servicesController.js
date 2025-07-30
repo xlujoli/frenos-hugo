@@ -234,5 +234,5 @@ module.exports = {
   getNextWorkOrder: serviceController.getNextWorkOrder,
   checkWorkOrderExists: serviceController.checkWorkOrderExists,
   registerService: serviceController.registerService,
-  getServicesByPlate: serviceController.getServicesByPlate
+  getServicesByPlate: serviceController.getServicesByPlate,
 };
