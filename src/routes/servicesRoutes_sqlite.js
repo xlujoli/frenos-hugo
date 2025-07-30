@@ -7,14 +7,14 @@ router.post("/", async (req, res) => {
   let db;
   try {
     db = await getSQLiteConnection();
-    
+
     const { workOrder, plate, work, cost } = req.body;
-    
+
     // Validar datos requeridos
     if (!workOrder || !plate || !work || !cost) {
       return res.status(400).json({
         success: false,
-        message: "Todos los campos son requeridos"
+        message: "Todos los campos son requeridos",
       });
     }
 
@@ -23,20 +23,20 @@ router.post("/", async (req, res) => {
       `INSERT INTO services (workOrder, plate, work, cost, service_date) 
        VALUES (?, ?, ?, ?, datetime('now'))`,
       [workOrder, plate.toUpperCase(), work, parseFloat(cost)],
-      function(err) {
+      function (err) {
         if (err) {
           console.error("Error insertando servicio:", err);
           return res.status(500).json({
             success: false,
             message: "Error guardando el servicio",
-            error: err.message
+            error: err.message,
           });
         }
 
         res.json({
           success: true,
           message: "Servicio registrado exitosamente",
-          serviceId: this.lastID
+          serviceId: this.lastID,
         });
       }
     );
@@ -45,7 +45,7 @@ router.post("/", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error interno del servidor",
-      error: error.message
+      error: error.message,
     });
   } finally {
     if (db) {
@@ -70,14 +70,14 @@ router.get("/plate/:plate", async (req, res) => {
           console.error("Error consultando servicios:", err);
           return res.status(500).json({
             success: false,
-            message: "Error consultando servicios"
+            message: "Error consultando servicios",
           });
         }
 
         res.json({
           success: true,
           services: rows,
-          total: rows.length
+          total: rows.length,
         });
       }
     );
@@ -85,7 +85,7 @@ router.get("/plate/:plate", async (req, res) => {
     console.error("Error en GET /services/plate:", error);
     res.status(500).json({
       success: false,
-      message: "Error interno del servidor"
+      message: "Error interno del servidor",
     });
   } finally {
     if (db) {

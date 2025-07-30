@@ -4,18 +4,18 @@ const consultService = async (req, res) => {
   let db;
   try {
     const { plate, workOrder } = req.query;
-    
+
     if (!plate && !workOrder) {
       return res.status(400).json({
         success: false,
-        message: "Debe proporcionar una placa o número de orden de trabajo"
+        message: "Debe proporcionar una placa o número de orden de trabajo",
       });
     }
 
     db = await getSQLiteConnection();
-    
+
     let query, params;
-    
+
     if (workOrder) {
       query = `
         SELECT s.*, c.brand, c.model, c.owner, c.phone 
@@ -41,16 +41,16 @@ const consultService = async (req, res) => {
         console.error("Error consultando servicios:", err);
         return res.status(500).json({
           success: false,
-          message: "Error consultando servicios"
+          message: "Error consultando servicios",
         });
       }
 
       if (rows.length === 0) {
         return res.status(404).json({
           success: false,
-          message: workOrder 
+          message: workOrder
             ? "No se encontró servicio con esa orden de trabajo"
-            : "No se encontraron servicios para esa placa"
+            : "No se encontraron servicios para esa placa",
         });
       }
 
@@ -59,15 +59,14 @@ const consultService = async (req, res) => {
         services: rows,
         total: rows.length,
         searchType: workOrder ? "workOrder" : "plate",
-        searchValue: workOrder || plate
+        searchValue: workOrder || plate,
       });
     });
-
   } catch (error) {
     console.error("Error en consultService:", error);
     res.status(500).json({
       success: false,
-      message: "Error interno del servidor"
+      message: "Error interno del servidor",
     });
   } finally {
     if (db) {
@@ -77,5 +76,5 @@ const consultService = async (req, res) => {
 };
 
 module.exports = {
-  consultService
+  consultService,
 };

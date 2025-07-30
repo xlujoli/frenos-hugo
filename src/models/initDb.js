@@ -21,11 +21,11 @@ const dbConfig = {
   // Configuraciones adicionales para mejorar conectividad
   externalAuth: false,
   homogeneous: true,
-  privilege: oracledb.SYSDBA // Solo si es necesario
+  privilege: oracledb.SYSDBA, // Solo si es necesario
 };
 
 // Remover privilege si no es necesario (para usuarios normales)
-if (!process.env.DB_SYSDBA || process.env.DB_SYSDBA.toLowerCase() !== 'true') {
+if (!process.env.DB_SYSDBA || process.env.DB_SYSDBA.toLowerCase() !== "true") {
   delete dbConfig.privilege;
 }
 
@@ -62,24 +62,26 @@ async function connectWithRetry(maxRetries = 3, delay = 5000) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`🔄 Intento de conexión ${attempt}/${maxRetries}...`);
-      
+
       if (!pool) {
         await createPool();
       }
-      
+
       const connection = await pool.getConnection();
       console.log(`✅ Conexión exitosa en intento ${attempt}`);
       return connection;
     } catch (err) {
       console.error(`❌ Intento ${attempt} falló:`, err.message);
-      
+
       if (attempt === maxRetries) {
         console.error("❌ Todos los intentos de conexión fallaron");
         throw err;
       }
-      
-      console.log(`⏳ Esperando ${delay/1000}s antes del siguiente intento...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+
+      console.log(
+        `⏳ Esperando ${delay / 1000}s antes del siguiente intento...`
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 }
@@ -89,7 +91,7 @@ async function initialize() {
   try {
     // Crear pool primero
     await createPool();
-    
+
     // Obtener conexión del pool
     connection = await pool.getConnection();
     console.log("Successfully connected to Oracle Database!");

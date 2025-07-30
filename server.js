@@ -14,6 +14,16 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static("public"));
 
+// Middleware de manejo de errores
+app.use((err, req, res, next) => {
+  console.error('❌ Error no manejado:', err);
+  res.status(500).json({
+    success: false,
+    message: 'Error interno del servidor',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
+  });
+});
+
 // Añadir este middleware
 app.use((req, res, next) => {
   console.log(`--> Incoming Request: ${req.method} ${req.originalUrl}`);
@@ -21,7 +31,7 @@ app.use((req, res, next) => {
 });
 
 // Rutas públicas (solo para usuarios finales) - Usando SQLite
-const carsRoutes = require("./src/routes/carsRoutes_sqlite"); 
+const carsRoutes = require("./src/routes/carsRoutes_sqlite");
 const servicesRoutes = require("./src/routes/servicesRoutes_sqlite");
 const consultationRoutes = require("./src/routes/consultationRoutes_sqlite");
 
@@ -36,7 +46,7 @@ app.get("/info", (req, res) => {
     version: "2.0.0 - Híbrido",
     database: "SQLite (Público)",
     admin: "Disponible en Oracle APEX",
-    status: "✅ Funcionando"
+    status: "✅ Funcionando",
   });
 });
 
@@ -111,18 +121,29 @@ app.post("/cars/register", async (req, res) => {
 // Iniciar servidor con SQLite
 async function startServer() {
   try {
-    await initLocalDb(); // Initialize SQLite database
+    console.log("🔄 Inicializando SQLite...");
+    await initLocalDb(); 
     console.log("✅ Base de datos SQLite inicializada correctamente");
   } catch (err) {
     console.error("❌ Error inicializando SQLite:", err);
     console.log("🔄 El servidor continuará ejecutándose sin base de datos");
   }
 
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor Frenos Hugo ejecutándose en puerto ${PORT}`);
     console.log(`📊 Base de datos: SQLite (Aplicación pública)`);
     console.log(`🔧 Administración: Oracle APEX`);
     console.log(`🌐 URL: http://localhost:${PORT}`);
+  });
+
+  // Manejo de errores del servidor
+  server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error(`❌ Puerto ${PORT} está en uso`);
+      process.exit(1);
+    } else {
+      console.error('❌ Error del servidor:', error);
+    }
   });
 }
 

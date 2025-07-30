@@ -7,14 +7,14 @@ router.post("/", async (req, res) => {
   let db;
   try {
     db = await getSQLiteConnection();
-    
+
     const { plate, brand, model, owner, phone } = req.body;
-    
+
     // Validar datos requeridos
     if (!plate || !brand || !model || !owner || !phone) {
       return res.status(400).json({
         success: false,
-        message: "Todos los campos son requeridos"
+        message: "Todos los campos son requeridos",
       });
     }
 
@@ -23,27 +23,27 @@ router.post("/", async (req, res) => {
       `INSERT INTO cars (plate, brand, model, owner, phone, created_at) 
        VALUES (?, ?, ?, ?, ?, datetime('now'))`,
       [plate.toUpperCase(), brand, model, owner, phone],
-      function(err) {
+      function (err) {
         if (err) {
-          if (err.message.includes('UNIQUE constraint failed')) {
+          if (err.message.includes("UNIQUE constraint failed")) {
             return res.status(409).json({
               success: false,
-              message: "Ya existe un vehículo con esa placa"
+              message: "Ya existe un vehículo con esa placa",
             });
           }
-          
+
           console.error("Error insertando vehículo:", err);
           return res.status(500).json({
             success: false,
             message: "Error guardando el vehículo",
-            error: err.message
+            error: err.message,
           });
         }
 
         res.json({
           success: true,
           message: "Vehículo registrado exitosamente",
-          carId: this.lastID
+          carId: this.lastID,
         });
       }
     );
@@ -52,7 +52,7 @@ router.post("/", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error interno del servidor",
-      error: error.message
+      error: error.message,
     });
   } finally {
     if (db) {
@@ -76,20 +76,20 @@ router.get("/:plate", async (req, res) => {
           console.error("Error consultando vehículo:", err);
           return res.status(500).json({
             success: false,
-            message: "Error consultando vehículo"
+            message: "Error consultando vehículo",
           });
         }
 
         if (!row) {
           return res.status(404).json({
             success: false,
-            message: "Vehículo no encontrado"
+            message: "Vehículo no encontrado",
           });
         }
 
         res.json({
           success: true,
-          car: row
+          car: row,
         });
       }
     );
@@ -97,7 +97,7 @@ router.get("/:plate", async (req, res) => {
     console.error("Error en GET /cars:", error);
     res.status(500).json({
       success: false,
-      message: "Error interno del servidor"
+      message: "Error interno del servidor",
     });
   } finally {
     if (db) {
