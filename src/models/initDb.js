@@ -4,10 +4,15 @@ const oracledb = require("oracledb");
 const dbConfig = {
   user: process.env.DB_USER || "CO_A851_SQL_T01_ADMIN",
   password: process.env.DB_PASSWORD || "Milagros_1",
-  connectString:
-    process.env.DB_CONNECTION_STRING ||
-    "oracle.academy.oracle.com:1521/PDB1.gbcnnaopac01.gbcnnaopacvcn.oraclevcn.com",
+  connectString: process.env.DB_CONNECTION_STRING || 
+    "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=oracle.academy.oracle.com)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=PDB1.gbcnnaopac01.gbcnnaopacvcn.oraclevcn.com)))",
 };
+
+console.log("🔗 Intentando conectar con:", {
+  user: dbConfig.user,
+  connectString: dbConfig.connectString,
+  // NO mostrar password por seguridad
+});
 
 async function initialize() {
   let connection;
