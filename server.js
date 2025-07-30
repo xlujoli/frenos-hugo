@@ -1,20 +1,10 @@
 console.log("--- Executing frenos-hugo/server.js ---");
 const express = require("express");
-const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
+const { initialize, getConnection } = require("./src/models/initDb"); // Import Oracle DB functions
 
 const app = express();
-// Use port provided by environment (Render) or default to 3000
 const PORT = process.env.PORT || 3000;
-
-const dbPath = path.resolve(__dirname, "database", "frenos.db");
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error("Error al conectar con la base de datos:", err);
-  } else {
-    console.log("Conexión exitosa a la base de datos en", dbPath);
-  }
-});
 
 // Middleware
 app.use(express.json());
@@ -27,16 +17,19 @@ app.use((req, res, next) => {
 });
 
 // Rutas
-// Pass the db connection to the routes function
-const carsRoutes = require("./src/routes/carsRoutes")(db);
-const servicesRoutes = require("./src/routes/servicesRoutes"); // Assuming this might need db too, adjust if necessary
-const consultationRoutes = require("./src/routes/consultationRoutes"); // Assuming this might need db too, adjust if necessary
+// Adjust how routes are loaded, they will use getConnection internally from models
+const carsRoutes = require("./src/routes/carsRoutes")(/*db*/); // db object no longer passed directly
+const servicesRoutes = require("./src/routes/servicesRoutes");
+const consultationRoutes = require("./src/routes/consultationRoutes");
+const adminRoutes = require("./src/routes/adminRoutes");
 
 app.use("/cars", carsRoutes);
 app.use("/services", servicesRoutes);
 app.use("/consultation", consultationRoutes);
+app.use("/admin", adminRoutes);
 
-app.post("/cars/register", (req, res) => {
+// Modify /cars/register to use Oracle DB
+app.post("/cars/register", async (req, res) => {
   const { plate, brand, model, owner, phone } = req.body;
 
   if (!plate || !brand || !model || !owner || !phone) {
@@ -45,56 +38,75 @@ app.post("/cars/register", (req, res) => {
       .send({ message: "Todos los campos son obligatorios." });
   }
 
-  // Prepend +57 if not already present
-  let formattedPhone = phone.trim(); // Remove leading/trailing whitespace
+  let formattedPhone = phone.trim();
   if (!formattedPhone.startsWith("+")) {
-    // If it doesn't start with +, assume it needs the country code
-    formattedPhone = "+57" + formattedPhone.replace(/\s+/g, ""); // Remove internal spaces too
+    formattedPhone = "+57" + formattedPhone.replace(/\s+/g, "");
   } else if (formattedPhone.startsWith("+57")) {
-    // If it already starts with +57, just remove internal spaces
     formattedPhone = "+57" + formattedPhone.substring(3).replace(/\s+/g, "");
   } else {
-    // If it starts with a different +, just remove internal spaces
     formattedPhone = formattedPhone.replace(/\s+/g, "");
   }
 
-  const query = `INSERT INTO cars (plate, brand, model, owner, phone) VALUES (?, ?, ?, ?, ?)`;
-  const params = [
-    plate.toUpperCase(),
-    brand.toUpperCase(),
-    model.toUpperCase(),
-    owner.toUpperCase(),
-    formattedPhone, // Use the formatted phone number
-  ];
+  const query = `INSERT INTO cars (id, plate, brand, model, owner, phone) VALUES (car_id_seq.NEXTVAL, :plate, :brand, :model, :owner, :phone)`;
+  const params = {
+    plate: plate.toUpperCase(),
+    brand: brand.toUpperCase(),
+    model: model.toUpperCase(),
+    owner: owner.toUpperCase(),
+    phone: formattedPhone,
+  };
 
-  db.run(query, params, function (err) {
-    if (err) {
-      console.error("Error al registrar el vehículo:", err);
-      // Check for UNIQUE constraint violation (plate already exists)
-      if (err.message.includes("UNIQUE constraint failed: cars.plate")) {
-        return res.status(409).send({
-          // 409 Conflict
-          message: `La placa ${params[0]} ya está registrada.`,
-          error: "PLATE_EXISTS",
-        });
-      }
-      return res.status(500).send({
-        message: "Error interno al registrar el vehículo. Intente nuevamente.",
-        error: err.message,
-      });
-    }
+  let connection;
+  try {
+    connection = await getConnection();
+    const result = await connection.execute(query, params, {
+      autoCommit: true,
+    });
 
-    // Return the registered plate in the success response
+    // For Oracle, result.lastRowid or result.rowsAffected might be useful depending on the statement
+    // For INSERT with sequence, getting the ID back might require another query or RETURNING clause if not using auto-generated keys directly
+    // For simplicity, we assume success if no error.
+
     res.status(201).send({
       message: "Vehículo registrado exitosamente.",
-      id: this.lastID,
-      plate: params[0],
-    }); // Added plate to response
-  });
+      // id: this.lastID, // SQLite specific
+      plate: params.plate,
+    });
+  } catch (err) {
+    console.error("Error al registrar el vehículo:", err);
+    if (err.errorNum === 1) {
+      // ORA-00001: unique constraint violated
+      return res.status(409).send({
+        message: `La placa ${params.plate} ya está registrada.`,
+        error: "PLATE_EXISTS",
+      });
+    }
+    return res.status(500).send({
+      message: "Error interno al registrar el vehículo. Intente nuevamente.",
+      error: err.message,
+    });
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (closeErr) {
+        console.error("Error closing connection:", closeErr);
+      }
+    }
+  }
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-  // Log the actual port being used
-  console.log(`Servidor corriendo en el puerto ${PORT}`);
-});
+// Iniciar servidor after DB initialization
+async function startServer() {
+  try {
+    await initialize(); // Initialize Oracle DB schema
+    app.listen(PORT, () => {
+      console.log(`Servidor corriendo en el puerto ${PORT}`);
+    });
+  } catch (err) {
+    console.error("Failed to initialize database or start server:", err);
+    process.exit(1); // Exit if DB initialization fails
+  }
+}
+
+startServer();
