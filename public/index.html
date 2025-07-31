@@ -431,11 +431,11 @@
         workOrderError.style.display = "none";
         messageArea.textContent = "";
         messageArea.style.color = "black";
-        
+
         // Restaurar apariencia normal de los campos
         workOrderInput.style.borderColor = "#ddd";
         workOrderInput.style.backgroundColor = "white";
-        
+
         invoiceItemsContainer.innerHTML =
           "<label>Detalles del Servicio:</label>";
         createInvoiceRow();
@@ -472,7 +472,7 @@
             workOrderError.style.display = "block";
             workOrderVerificationStatus.verified = true;
             workOrderVerificationStatus.isUnique = false;
-            
+
             // Hacer que el campo se vea como error
             workOrderInput.style.borderColor = "#dc3545";
             workOrderInput.style.backgroundColor = "#fff5f5";
@@ -480,7 +480,7 @@
             workOrderError.style.display = "none";
             workOrderVerificationStatus.verified = true;
             workOrderVerificationStatus.isUnique = true;
-            
+
             // Restaurar apariencia normal del campo
             workOrderInput.style.borderColor = "#ddd";
             workOrderInput.style.backgroundColor = "white";
@@ -491,7 +491,7 @@
           workOrderError.style.display = "block";
           workOrderVerificationStatus.verified = false;
           workOrderVerificationStatus.isUnique = false;
-          
+
           // Hacer que el campo se vea como error
           workOrderInput.style.borderColor = "#dc3545";
           workOrderInput.style.backgroundColor = "#fff5f5";
@@ -594,31 +594,57 @@
         }
       });
 
-      workOrderInput.addEventListener("keydown", function (event) {
+      workOrderInput.addEventListener("keydown", async function (event) {
         if (event.key === "Tab" || event.key === "Enter") {
           const workOrder = this.value.trim();
           if (workOrder) {
             // Verificar inmediatamente al presionar Tab o Enter
-            verifyWorkOrderNumber(workOrder).then(() => {
-              // Si el número de orden no es único, bloquear la navegación
-              if (workOrderVerificationStatus.verified && !workOrderVerificationStatus.isUnique) {
-                event.preventDefault(); // Evitar que se mueva al siguiente campo
-                this.focus(); // Mantener el foco en este campo
-                return false;
-              }
-            });
+            await verifyWorkOrderNumber(workOrder);
+
+            // Si el número de orden no es único, bloquear la navegación
+            if (
+              workOrderVerificationStatus.verified &&
+              !workOrderVerificationStatus.isUnique
+            ) {
+              event.preventDefault(); // Evitar que se mueva al siguiente campo
+              this.focus(); // Mantener el foco en este campo
+              alert(
+                `❌ El número de orden ${workOrder} ya existe. Por favor, use un número diferente.`
+              );
+              return false;
+            }
           }
         }
       });
 
       // Bloquear envío de formulario si hay número duplicado
-      workOrderInput.addEventListener("input", function() {
+      let workOrderTimeout;
+      workOrderInput.addEventListener("input", function () {
         // Limpiar estado anterior cuando el usuario está escribiendo
         const currentWorkOrder = this.value.trim();
-        if (currentWorkOrder !== workOrderVerificationStatus.lastCheckedWorkOrder) {
+
+        // Limpiar timeout anterior
+        if (workOrderTimeout) {
+          clearTimeout(workOrderTimeout);
+        }
+
+        if (
+          currentWorkOrder !== workOrderVerificationStatus.lastCheckedWorkOrder
+        ) {
           workOrderError.style.display = "none";
           workOrderVerificationStatus.verified = false;
           workOrderVerificationStatus.isUnique = true;
+
+          // Restaurar apariencia normal del campo
+          workOrderInput.style.borderColor = "#ddd";
+          workOrderInput.style.backgroundColor = "white";
+        }
+
+        // Verificar automáticamente después de 800ms de inactividad
+        if (currentWorkOrder && currentWorkOrder.length > 0) {
+          workOrderTimeout = setTimeout(() => {
+            verifyWorkOrderNumber(currentWorkOrder);
+          }, 800);
         }
       });
 
