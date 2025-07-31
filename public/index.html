@@ -430,6 +430,7 @@
         plateStatus.innerHTML = "";
         workOrderError.style.display = "none";
         messageArea.textContent = "";
+        messageArea.style.color = "black";
         invoiceItemsContainer.innerHTML =
           "<label>Detalles del Servicio:</label>";
         createInvoiceRow();
@@ -693,9 +694,6 @@
           const workOrderValue = workOrderInput.value.trim();
 
           if (!plate || !workOrderValue) {
-            messageArea.textContent =
-              "Por favor complete todos los campos requeridos.";
-            messageArea.style.color = "red";
             return;
           }
 
@@ -705,9 +703,6 @@
             workOrderVerificationStatus.lastCheckedWorkOrder !== workOrderValue
           ) {
             // Si no se ha verificado o el número cambió, verificar ahora
-            messageArea.textContent = "Verificando número de orden...";
-            messageArea.style.color = "blue";
-
             await verifyWorkOrderNumber(workOrderValue);
 
             // Esperar un momento para que se complete la verificación
@@ -719,8 +714,6 @@
             workOrderVerificationStatus.verified &&
             !workOrderVerificationStatus.isUnique
           ) {
-            messageArea.textContent = `El número de orden ${workOrderValue} ya existe. Por favor use un número diferente.`;
-            messageArea.style.color = "red";
             workOrderInput.focus();
             return;
           }
@@ -731,9 +724,6 @@
             plateVerificationStatus.lastCheckedPlate !== plate
           ) {
             // Si no se ha verificado o la placa cambió, verificar ahora
-            messageArea.textContent = "Verificando vehículo...";
-            messageArea.style.color = "blue";
-
             await verifyPlateAutomatically(plate);
 
             // Esperar un momento para que se complete la verificación
@@ -742,9 +732,6 @@
 
           // Verificar el estado actual de la placa
           if (!plateVerificationStatus.verified) {
-            messageArea.textContent =
-              "Error al verificar el vehículo. Intente nuevamente.";
-            messageArea.style.color = "red";
             return;
           }
 
@@ -756,14 +743,6 @@
 
           // Si llegamos aquí, la placa existe y está verificada
           const vehicleData = plateVerificationStatus.vehicleData;
-          messageArea.textContent = `✅ Vehículo verificado: ${vehicleData.marca} ${vehicleData.modelo} - Propietario: ${vehicleData.propietario}`;
-          messageArea.style.color = "green";
-
-          // Pequeña pausa para mostrar la verificación exitosa
-          setTimeout(() => {
-            messageArea.textContent = "Procesando detalles del servicio...";
-            messageArea.style.color = "blue";
-          }, 800);
 
           // --- Gather Invoice Data ---
           const invoiceRows =
@@ -787,19 +766,11 @@
 
             // Validate non-empty rows
             if (!detail) {
-              messageArea.textContent = `Por favor, ingrese un detalle para el ítem ${
-                i + 1
-              }.`;
-              messageArea.style.color = "red";
               detailInput.focus();
               return;
             }
 
             if (!valueStr || isNaN(value) || value < 0) {
-              messageArea.textContent = `Por favor, ingrese un valor válido para el ítem ${
-                i + 1
-              }.`;
-              messageArea.style.color = "red";
               valueInput.focus();
               return;
             }
@@ -813,17 +784,11 @@
           }
 
           if (validItemsCount === 0) {
-            messageArea.textContent =
-              "Por favor, añada al menos un detalle de servicio válido.";
-            messageArea.style.color = "red";
             return;
           }
 
           // Submit service
           try {
-            messageArea.textContent = "Registrando servicio...";
-            messageArea.style.color = "blue";
-
             const response = await fetch("/api/services", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -840,14 +805,10 @@
 
             if (response.ok) {
               // Servicio guardado exitosamente - limpiar formulario sin mostrar modal
-              messageArea.textContent = "✅ Servicio registrado exitosamente";
-              messageArea.style.color = "green";
-
-              // Limpiar formulario después de 1 segundo
-              setTimeout(() => {
-                clearServiceForm();
-              }, 1000);
+              // Limpiar formulario inmediatamente
+              clearServiceForm();
             } else {
+              // Solo mostrar errores del servidor
               messageArea.textContent = `Error: ${
                 responseData.message || "Ocurrió un error"
               }`;
