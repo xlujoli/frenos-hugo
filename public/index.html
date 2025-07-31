@@ -833,11 +833,6 @@
             workOrderInput.focus();
             workOrderInput.select(); // Seleccionar el texto para fácil corrección
 
-            // Mostrar también un mensaje prominente
-            messageArea.textContent = `❌ ERROR: El número de orden ${workOrderValue} ya existe en el sistema.`;
-            messageArea.style.color = "red";
-            messageArea.style.fontWeight = "bold";
-
             return; // DETENER completamente el proceso
           }
 
