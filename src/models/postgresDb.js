@@ -47,7 +47,6 @@ class PostgresDatabase {
           id SERIAL PRIMARY KEY,
           orden_trabajo INTEGER NOT NULL,
           placa VARCHAR(20) NOT NULL,
-          tipo_servicio VARCHAR(100) NOT NULL,
           descripcion TEXT,
           costo DECIMAL(10,2),
           estado VARCHAR(50) DEFAULT 'pendiente',
@@ -100,6 +99,16 @@ class PostgresDatabase {
         CREATE INDEX IF NOT EXISTS idx_historial_fecha ON historial_servicios (fecha);
       `);
 
+      // Migración: Eliminar columna tipo_servicio si existe
+      try {
+        await this.pool.query(`
+          ALTER TABLE servicios DROP COLUMN IF EXISTS tipo_servicio;
+        `);
+        console.log("✅ Migración: Columna tipo_servicio eliminada");
+      } catch (error) {
+        console.log("⚠️ Columna tipo_servicio ya había sido eliminada o no existía");
+      }
+
       console.log("✅ Tablas creadas/verificadas en PostgreSQL");
     } catch (error) {
       console.error("❌ Error creando tablas:", error);
@@ -143,16 +152,15 @@ class PostgresDatabase {
 
   // Métodos específicos para servicios
   async createService(serviceData) {
-    const { orden_trabajo, placa, tipo_servicio, descripcion, costo } =
-      serviceData;
+    const { orden_trabajo, placa, descripcion, costo } = serviceData;
 
     const result = await this.query(
       `
-      INSERT INTO servicios (orden_trabajo, placa, tipo_servicio, descripcion, costo)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO servicios (orden_trabajo, placa, descripcion, costo)
+      VALUES ($1, $2, $3, $4)
       RETURNING *
     `,
-      [orden_trabajo, placa, tipo_servicio, descripcion, costo]
+      [orden_trabajo, placa, descripcion, costo]
     );
 
     return result.rows[0];

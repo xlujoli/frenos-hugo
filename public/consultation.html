@@ -41,7 +41,9 @@
           <li><a href="index.html">Registrar Servicio</a></li>
           <li><a href="cars.html">Vehículos</a></li>
           <li><a href="services.html">Servicios</a></li>
-          <li><button id="logoutBtn" class="logout-btn">🚪 Cerrar Sesión</button></li>
+          <li>
+            <button id="logoutBtn" class="logout-btn">🚪 Cerrar Sesión</button>
+          </li>
         </ul>
       </nav>
     </header>
@@ -242,14 +244,16 @@
       });
 
       // Manejar botón de cerrar sesión
-      document.getElementById("logoutBtn").addEventListener("click", function () {
-        if (confirm("¿Está seguro de que desea cerrar sesión?")) {
-          localStorage.removeItem("isAuthenticated");
-          localStorage.removeItem("username");
-          localStorage.removeItem("loginTime");
-          window.location.href = "login.html";
-        }
-      });
+      document
+        .getElementById("logoutBtn")
+        .addEventListener("click", function () {
+          if (confirm("¿Está seguro de que desea cerrar sesión?")) {
+            localStorage.removeItem("isAuthenticated");
+            localStorage.removeItem("username");
+            localStorage.removeItem("loginTime");
+            window.location.href = "login.html";
+          }
+        });
     </script>
   </body>
 </html>
