@@ -153,9 +153,7 @@
             />
           </div>
 
-          <button type="submit" class="login-btn">
-            Iniciar Sesión
-          </button>
+          <button type="submit" class="login-btn">Iniciar Sesión</button>
         </form>
 
         <div class="footer-note">
@@ -166,53 +164,53 @@
 
     <script>
       // Verificar si ya está autenticado
-      if (localStorage.getItem('isAuthenticated') === 'true') {
-        window.location.href = 'index.html';
+      if (localStorage.getItem("isAuthenticated") === "true") {
+        window.location.href = "index.html";
       }
 
-      const loginForm = document.getElementById('loginForm');
-      const messageArea = document.getElementById('messageArea');
-      const usernameInput = document.getElementById('username');
-      const passwordInput = document.getElementById('password');
+      const loginForm = document.getElementById("loginForm");
+      const messageArea = document.getElementById("messageArea");
+      const usernameInput = document.getElementById("username");
+      const passwordInput = document.getElementById("password");
 
-      function showMessage(message, type = 'error') {
+      function showMessage(message, type = "error") {
         messageArea.innerHTML = `<div class="${type}-message">${message}</div>`;
         setTimeout(() => {
-          messageArea.innerHTML = '';
+          messageArea.innerHTML = "";
         }, 5000);
       }
 
-      loginForm.addEventListener('submit', function(event) {
+      loginForm.addEventListener("submit", function (event) {
         event.preventDefault();
-        
+
         const username = usernameInput.value.trim();
         const password = passwordInput.value;
 
         // Limpiar mensajes previos
-        messageArea.innerHTML = '';
+        messageArea.innerHTML = "";
 
         // Validación básica
         if (!username || !password) {
-          showMessage('Por favor, complete todos los campos.');
+          showMessage("Por favor, complete todos los campos.");
           return;
         }
 
         // Verificar credenciales
-        if (username === 'samuel' && password === 'rodeo2025') {
+        if (username === "samuel" && password === "rodeo2025") {
           // Autenticación exitosa
-          localStorage.setItem('isAuthenticated', 'true');
-          localStorage.setItem('username', username);
-          localStorage.setItem('loginTime', new Date().getTime());
-          
-          showMessage('¡Acceso exitoso! Redirigiendo...', 'success');
-          
+          localStorage.setItem("isAuthenticated", "true");
+          localStorage.setItem("username", username);
+          localStorage.setItem("loginTime", new Date().getTime());
+
+          showMessage("¡Acceso exitoso! Redirigiendo...", "success");
+
           setTimeout(() => {
-            window.location.href = 'index.html';
+            window.location.href = "index.html";
           }, 1500);
         } else {
           // Credenciales incorrectas
-          showMessage('Usuario o contraseña incorrectos. Intente nuevamente.');
-          passwordInput.value = '';
+          showMessage("Usuario o contraseña incorrectos. Intente nuevamente.");
+          passwordInput.value = "";
           usernameInput.focus();
         }
       });
@@ -221,8 +219,8 @@
       usernameInput.focus();
 
       // Manejar Enter en los campos
-      usernameInput.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
+      usernameInput.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
           event.preventDefault();
           passwordInput.focus();
         }
