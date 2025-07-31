@@ -6,6 +6,31 @@
     <title>Consultar Servicios - Frenos Hugo</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="auth.js"></script>
+    <style>
+      /* Estilos para el botón de cerrar sesión */
+      .logout-btn {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-left: 10px;
+      }
+
+      .logout-btn:hover {
+        background: #c82333;
+        transform: translateY(-1px);
+      }
+
+      nav ul {
+        display: flex;
+        align-items: center;
+      }
+    </style>
   </head>
   <body>
     <header>
@@ -16,6 +41,7 @@
           <li><a href="index.html">Registrar Servicio</a></li>
           <li><a href="cars.html">Vehículos</a></li>
           <li><a href="services.html">Servicios</a></li>
+          <li><button id="logoutBtn" class="logout-btn">🚪 Cerrar Sesión</button></li>
         </ul>
       </nav>
     </header>
@@ -189,10 +215,6 @@
               <div class="card-section">
                 <h5>Vehículo</h5>
                 <p><strong>Placa:</strong> ${service.placa}</p>
-                <p><strong>Tipo de Servicio:</strong> ${
-                  service.tipo_servicio || "N/A"
-                }</p>
-                <p><strong>Estado:</strong> ${service.estado || "N/A"}</p>
               </div>
               <div class="card-section">
                 <h5>Detalles del Servicio</h5>
@@ -216,6 +238,16 @@
           console.error("Error de red o al procesar la solicitud:", error);
           const resultsContainer = document.getElementById("results");
           resultsContainer.innerHTML = `<p class="error-message">No se pudo conectar con el servidor o procesar la respuesta. Intente nuevamente.</p>`;
+        }
+      });
+
+      // Manejar botón de cerrar sesión
+      document.getElementById("logoutBtn").addEventListener("click", function () {
+        if (confirm("¿Está seguro de que desea cerrar sesión?")) {
+          localStorage.removeItem("isAuthenticated");
+          localStorage.removeItem("username");
+          localStorage.removeItem("loginTime");
+          window.location.href = "login.html";
         }
       });
     </script>

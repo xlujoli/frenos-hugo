@@ -6,6 +6,31 @@
     <title>Registrar Vehículo - Frenos Hugo</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="auth.js"></script>
+    <style>
+      /* Estilos para el botón de cerrar sesión */
+      .logout-btn {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-left: 10px;
+      }
+
+      .logout-btn:hover {
+        background: #c82333;
+        transform: translateY(-1px);
+      }
+
+      nav ul {
+        display: flex;
+        align-items: center;
+      }
+    </style>
   </head>
   <body>
     <header>
@@ -14,6 +39,7 @@
         <ul>
           <li><a href="index.html">Registrar Servicio</a></li>
           <li><a href="consultation.html">Consulta</a></li>
+          <li><button id="logoutBtn" class="logout-btn">🚪 Cerrar Sesión</button></li>
         </ul>
       </nav>
     </header>
@@ -165,6 +191,16 @@
           messageArea.textContent =
             "Error de conexión o al procesar la solicitud. Intente nuevamente.";
           messageArea.style.color = "red";
+        }
+      });
+
+      // Manejar botón de cerrar sesión
+      document.getElementById("logoutBtn").addEventListener("click", function () {
+        if (confirm("¿Está seguro de que desea cerrar sesión?")) {
+          localStorage.removeItem("isAuthenticated");
+          localStorage.removeItem("username");
+          localStorage.removeItem("loginTime");
+          window.location.href = "login.html";
         }
       });
     </script>
