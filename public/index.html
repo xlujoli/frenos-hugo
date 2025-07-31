@@ -740,6 +740,43 @@
           calculateTotal();
         });
 
+        // Validación para el campo detalle - no permitir pasar al valor si está vacío
+        detailInput.addEventListener("keydown", function(event) {
+          if (event.key === "Tab" || event.key === "Enter") {
+            const detailValue = this.value.trim();
+            if (!detailValue) {
+              event.preventDefault();
+              this.focus();
+              // Agregar feedback visual temporal
+              this.style.borderColor = "#dc3545";
+              this.style.backgroundColor = "#fff5f5";
+              
+              // Restaurar estilo después de 2 segundos
+              setTimeout(() => {
+                this.style.borderColor = "#ddd";
+                this.style.backgroundColor = "white";
+              }, 2000);
+              
+              return false;
+            }
+          }
+        });
+
+        // Limpiar estilo de error cuando el usuario empiece a escribir
+        detailInput.addEventListener("input", function() {
+          this.style.borderColor = "#ddd";
+          this.style.backgroundColor = "white";
+        });
+
+        // Validación adicional en blur (cuando pierde el foco)
+        detailInput.addEventListener("blur", function() {
+          const detailValue = this.value.trim();
+          if (!detailValue) {
+            this.style.borderColor = "#dc3545";
+            this.style.backgroundColor = "#fff5f5";
+          }
+        });
+
         detailInput.focus(); // Focus on the detail input of the new row
         return rowDiv;
       }
@@ -886,12 +923,44 @@
 
             // Validate non-empty rows
             if (!detail) {
+              // Agregar feedback visual para campo detalle vacío
+              detailInput.style.borderColor = "#dc3545";
+              detailInput.style.backgroundColor = "#fff5f5";
               detailInput.focus();
+              
+              // Mostrar mensaje temporal
+              messageArea.textContent = "⚠️ Por favor, complete el detalle del servicio antes de continuar.";
+              messageArea.style.color = "#dc3545";
+              messageArea.style.fontWeight = "bold";
+              
+              // Limpiar mensaje después de 3 segundos
+              setTimeout(() => {
+                messageArea.textContent = "";
+                messageArea.style.color = "black";
+                messageArea.style.fontWeight = "normal";
+              }, 3000);
+              
               return;
             }
 
             if (!valueStr || isNaN(value) || value < 0) {
+              // Agregar feedback visual para campo valor vacío/inválido
+              valueInput.style.borderColor = "#dc3545";
+              valueInput.style.backgroundColor = "#fff5f5";
               valueInput.focus();
+              
+              // Mostrar mensaje temporal
+              messageArea.textContent = "⚠️ Por favor, ingrese un valor válido para el servicio.";
+              messageArea.style.color = "#dc3545";
+              messageArea.style.fontWeight = "bold";
+              
+              // Limpiar mensaje después de 3 segundos
+              setTimeout(() => {
+                messageArea.textContent = "";
+                messageArea.style.color = "black";
+                messageArea.style.fontWeight = "normal";
+              }, 3000);
+              
               return;
             }
 
