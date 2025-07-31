@@ -1,87 +1,303 @@
-const { Pool } = require('pg');
+const { Pool } = require("pg");
 
-// Configuración de PostgreSQL
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/frenos_hugo',
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
+class PostgresDatabase {
+  constructor() {
+    this.pool = null;
+    this.isConnected = false;
+  }
 
-// Función para inicializar las tablas
-async function initDatabase() {
-  try {
-    console.log('🔄 Inicializando base de datos PostgreSQL...');
-    
-    // Crear tabla de servicios
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS servicios (
-        id SERIAL PRIMARY KEY,
-        work_order INTEGER NOT NULL,
-        plate VARCHAR(20) NOT NULL,
-        service_type VARCHAR(100) NOT NULL,
-        description TEXT,
-        cost DECIMAL(10,2),
-        status VARCHAR(50) DEFAULT 'pendiente',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+  async init() {
+    try {
+      // Configuración de conexión
+      const config = {
+        connectionString: process.env.DATABASE_URL,
+        ssl:
+          process.env.NODE_ENV === "production"
+            ? { rejectUnauthorized: false }
+            : false,
+        max: 20, // máximo de conexiones en el pool
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 10000,
+      };
 
-    // Crear tabla de vehículos
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS vehiculos (
-        id SERIAL PRIMARY KEY,
-        plate VARCHAR(20) UNIQUE NOT NULL,
-        brand VARCHAR(50) NOT NULL,
-        model VARCHAR(50) NOT NULL,
-        year INTEGER,
-        owner_name VARCHAR(100) NOT NULL,
-        owner_phone VARCHAR(20),
-        owner_email VARCHAR(100),
-        notes TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+      this.pool = new Pool(config);
 
-    // Crear índices para mejorar el rendimiento
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_servicios_plate ON servicios(plate)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_servicios_status ON servicios(status)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_vehiculos_plate ON vehiculos(plate)');
+      // Verificar conexión
+      const client = await this.pool.connect();
+      console.log("✅ Conectado a PostgreSQL");
+      client.release();
 
-    console.log('✅ Base de datos PostgreSQL inicializada correctamente');
-  } catch (error) {
-    console.error('❌ Error inicializando base de datos:', error);
-    throw error;
+      this.isConnected = true;
+
+      // Crear tablas si no existen
+      await this.createTables();
+
+      return true;
+    } catch (error) {
+      console.error("❌ Error conectando a PostgreSQL:", error);
+      this.isConnected = false;
+      throw error;
+    }
+  }
+
+  async createTables() {
+    try {
+      await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS servicios (
+          id SERIAL PRIMARY KEY,
+          orden_trabajo INTEGER NOT NULL,
+          placa VARCHAR(20) NOT NULL,
+          tipo_servicio VARCHAR(100) NOT NULL,
+          descripcion TEXT,
+          costo DECIMAL(10,2),
+          estado VARCHAR(50) DEFAULT 'pendiente',
+          fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      await this.pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_servicios_placa ON servicios (placa);
+        CREATE INDEX IF NOT EXISTS idx_servicios_fecha ON servicios (fecha_creacion);
+        CREATE INDEX IF NOT EXISTS idx_servicios_estado ON servicios (estado);
+      `);
+
+      await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS vehiculos (
+          id SERIAL PRIMARY KEY,
+          placa VARCHAR(20) UNIQUE NOT NULL,
+          marca VARCHAR(50) NOT NULL,
+          modelo VARCHAR(50) NOT NULL,
+          año INTEGER,
+          color VARCHAR(30),
+          propietario VARCHAR(100),
+          telefono VARCHAR(20),
+          email VARCHAR(100),
+          fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          estado VARCHAR(20) DEFAULT 'activo'
+        );
+      `);
+
+      await this.pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_vehiculos_placa ON vehiculos (placa);
+        CREATE INDEX IF NOT EXISTS idx_vehiculos_propietario ON vehiculos (propietario);
+        CREATE INDEX IF NOT EXISTS idx_vehiculos_fecha ON vehiculos (fecha_registro);
+      `);
+
+      await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS historial_servicios (
+          id SERIAL PRIMARY KEY,
+          servicio_id INTEGER REFERENCES servicios(id) ON DELETE CASCADE,
+          accion VARCHAR(50) NOT NULL,
+          descripcion TEXT,
+          usuario VARCHAR(100),
+          fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      await this.pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_historial_servicio_id ON historial_servicios (servicio_id);
+        CREATE INDEX IF NOT EXISTS idx_historial_fecha ON historial_servicios (fecha);
+      `);
+
+      console.log("✅ Tablas creadas/verificadas en PostgreSQL");
+    } catch (error) {
+      console.error("❌ Error creando tablas:", error);
+      throw error;
+    }
+  }
+
+  async query(text, params = []) {
+    if (!this.isConnected) {
+      throw new Error("Base de datos no conectada");
+    }
+
+    try {
+      const start = Date.now();
+      const result = await this.pool.query(text, params);
+      const duration = Date.now() - start;
+
+      console.log(`📊 Query ejecutada en ${duration}ms:`, {
+        query: text.substring(0, 100) + "...",
+        rows: result.rowCount,
+      });
+
+      return result;
+    } catch (error) {
+      console.error("❌ Error en query:", error);
+      throw error;
+    }
+  }
+
+  async getClient() {
+    return await this.pool.connect();
+  }
+
+  async close() {
+    if (this.pool) {
+      await this.pool.end();
+      this.isConnected = false;
+      console.log("🔒 Conexión a PostgreSQL cerrada");
+    }
+  }
+
+  // Métodos específicos para servicios
+  async createService(serviceData) {
+    const { orden_trabajo, placa, tipo_servicio, descripcion, costo } =
+      serviceData;
+
+    const result = await this.query(
+      `
+      INSERT INTO servicios (orden_trabajo, placa, tipo_servicio, descripcion, costo)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `,
+      [orden_trabajo, placa, tipo_servicio, descripcion, costo]
+    );
+
+    return result.rows[0];
+  }
+
+  async getServices(filters = {}) {
+    let query = "SELECT * FROM servicios WHERE 1=1";
+    const params = [];
+    let paramCount = 0;
+
+    if (filters.placa) {
+      paramCount++;
+      query += ` AND placa ILIKE $${paramCount}`;
+      params.push(`%${filters.placa}%`);
+    }
+
+    if (filters.estado) {
+      paramCount++;
+      query += ` AND estado = $${paramCount}`;
+      params.push(filters.estado);
+    }
+
+    if (filters.fecha_desde) {
+      paramCount++;
+      query += ` AND fecha_creacion >= $${paramCount}`;
+      params.push(filters.fecha_desde);
+    }
+
+    query += " ORDER BY fecha_creacion DESC";
+
+    if (filters.limit) {
+      paramCount++;
+      query += ` LIMIT $${paramCount}`;
+      params.push(filters.limit);
+    }
+
+    const result = await this.query(query, params);
+    return result.rows;
+  }
+
+  async deleteService(id) {
+    const result = await this.query(
+      "DELETE FROM servicios WHERE id = $1 RETURNING *",
+      [id]
+    );
+    return result.rows[0];
+  }
+
+  async updateService(id, updates) {
+    const fields = [];
+    const values = [];
+    let paramCount = 0;
+
+    Object.keys(updates).forEach((key) => {
+      if (updates[key] !== undefined) {
+        paramCount++;
+        fields.push(`${key} = $${paramCount}`);
+        values.push(updates[key]);
+      }
+    });
+
+    if (fields.length === 0) {
+      throw new Error("No hay campos para actualizar");
+    }
+
+    paramCount++;
+    values.push(id);
+
+    const query = `
+      UPDATE servicios 
+      SET ${fields.join(", ")}, fecha_actualizacion = CURRENT_TIMESTAMP
+      WHERE id = $${paramCount}
+      RETURNING *
+    `;
+
+    const result = await this.query(query, values);
+    return result.rows[0];
+  }
+
+  // Métodos específicos para vehículos
+  async createVehicle(vehicleData) {
+    const { placa, marca, modelo, año, color, propietario, telefono, email } =
+      vehicleData;
+
+    const result = await this.query(
+      `
+      INSERT INTO vehiculos (placa, marca, modelo, año, color, propietario, telefono, email)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+    `,
+      [placa, marca, modelo, año, color, propietario, telefono, email]
+    );
+
+    return result.rows[0];
+  }
+
+  async getVehicles(filters = {}) {
+    let query = "SELECT * FROM vehiculos WHERE estado = 'activo'";
+    const params = [];
+    let paramCount = 0;
+
+    if (filters.placa) {
+      paramCount++;
+      query += ` AND placa ILIKE $${paramCount}`;
+      params.push(`%${filters.placa}%`);
+    }
+
+    if (filters.propietario) {
+      paramCount++;
+      query += ` AND propietario ILIKE $${paramCount}`;
+      params.push(`%${filters.propietario}%`);
+    }
+
+    query += " ORDER BY fecha_registro DESC";
+
+    const result = await this.query(query, params);
+    return result.rows;
+  }
+
+  async deleteVehicle(id) {
+    const result = await this.query(
+      "UPDATE vehiculos SET estado = 'eliminado' WHERE id = $1 RETURNING *",
+      [id]
+    );
+    return result.rows[0];
+  }
+
+  // Estadísticas
+  async getStats() {
+    const totalServicios = await this.query(
+      "SELECT COUNT(*) as count FROM servicios"
+    );
+    const totalVehiculos = await this.query(
+      "SELECT COUNT(*) as count FROM vehiculos WHERE estado = 'activo'"
+    );
+    const serviciosHoy = await this.query(
+      "SELECT COUNT(*) as count FROM servicios WHERE DATE(fecha_creacion) = CURRENT_DATE"
+    );
+
+    return {
+      totalServicios: parseInt(totalServicios.rows[0].count),
+      totalVehiculos: parseInt(totalVehiculos.rows[0].count),
+      serviciosHoy: parseInt(serviciosHoy.rows[0].count),
+    };
   }
 }
 
-// Función para obtener la conexión
-function getDB() {
-  return pool;
-}
-
-// Función para cerrar la conexión
-async function closeDB() {
-  await pool.end();
-}
-
-// Función de prueba de conexión
-async function testConnection() {
-  try {
-    const client = await pool.connect();
-    const result = await client.query('SELECT NOW()');
-    client.release();
-    console.log('✅ Conexión a PostgreSQL exitosa:', result.rows[0]);
-    return true;
-  } catch (error) {
-    console.error('❌ Error de conexión a PostgreSQL:', error);
-    return false;
-  }
-}
-
-module.exports = {
-  initDatabase,
-  getDB,
-  closeDB,
-  testConnection
-};
+module.exports = PostgresDatabase;
