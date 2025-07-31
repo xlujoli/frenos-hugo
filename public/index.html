@@ -454,8 +454,15 @@
         }
 
         // Si ya verificamos este número, usar el resultado previo
-        if (workOrderNumber === workOrderVerificationStatus.lastCheckedWorkOrder && workOrderVerificationStatus.verified) {
-          console.log("✅ Usando resultado previo:", workOrderVerificationStatus.isUnique);
+        if (
+          workOrderNumber ===
+            workOrderVerificationStatus.lastCheckedWorkOrder &&
+          workOrderVerificationStatus.verified
+        ) {
+          console.log(
+            "✅ Usando resultado previo:",
+            workOrderVerificationStatus.isUnique
+          );
           return workOrderVerificationStatus.isUnique;
         }
 
@@ -470,8 +477,12 @@
             throw new Error("Error al verificar número de orden");
           }
 
-          const services = await response.json();
-          console.log("📋 Servicios obtenidos:", services.length);
+          const responseData = await response.json();
+          console.log("📋 Respuesta completa:", responseData);
+          
+          // Extraer el array de servicios de la respuesta
+          const services = responseData.data || responseData;
+          console.log("📋 Servicios extraídos:", services.length);
 
           const existingService = services.find(
             (service) => service.orden_trabajo == workOrderNumber
@@ -489,7 +500,7 @@
             // Hacer que el campo se vea como error
             workOrderInput.style.borderColor = "#dc3545";
             workOrderInput.style.backgroundColor = "#fff5f5";
-            
+
             return false; // Número duplicado
           } else {
             console.log("✅ Número de orden único");
@@ -500,7 +511,7 @@
             // Restaurar apariencia normal del campo
             workOrderInput.style.borderColor = "#ddd";
             workOrderInput.style.backgroundColor = "white";
-            
+
             return true; // Número único
           }
         } catch (error) {
@@ -513,7 +524,7 @@
           // Hacer que el campo se vea como error
           workOrderInput.style.borderColor = "#dc3545";
           workOrderInput.style.backgroundColor = "#fff5f5";
-          
+
           return false; // Error = no permitir continuar
         }
       }
@@ -653,7 +664,9 @@
         }
 
         // Resetear estado si el número cambió
-        if (currentWorkOrder !== workOrderVerificationStatus.lastCheckedWorkOrder) {
+        if (
+          currentWorkOrder !== workOrderVerificationStatus.lastCheckedWorkOrder
+        ) {
           workOrderError.style.display = "none";
           workOrderVerificationStatus.verified = false;
           workOrderVerificationStatus.isUnique = true;
@@ -783,9 +796,14 @@
           }
 
           // --- Verificar número de orden duplicado ---
-          console.log("🔍 FORMULARIO: Verificando número de orden antes de envío");
-          console.log("📊 Estado actual antes de verificar:", workOrderVerificationStatus);
-          
+          console.log(
+            "🔍 FORMULARIO: Verificando número de orden antes de envío"
+          );
+          console.log(
+            "📊 Estado actual antes de verificar:",
+            workOrderVerificationStatus
+          );
+
           if (
             !workOrderVerificationStatus.verified ||
             workOrderVerificationStatus.lastCheckedWorkOrder !== workOrderValue
@@ -799,7 +817,10 @@
             await new Promise((resolve) => setTimeout(resolve, 100));
           }
 
-          console.log("📊 Estado final después de verificar:", workOrderVerificationStatus);
+          console.log(
+            "📊 Estado final después de verificar:",
+            workOrderVerificationStatus
+          );
 
           // BLOQUEAR ENVÍO si el número de orden ya existe
           if (
@@ -814,12 +835,12 @@
             workOrderInput.style.backgroundColor = "#fff5f5";
             workOrderInput.focus();
             workOrderInput.select(); // Seleccionar el texto para fácil corrección
-            
+
             // Mostrar también un mensaje prominente
             messageArea.textContent = `❌ ERROR: El número de orden ${workOrderValue} ya existe en el sistema.`;
             messageArea.style.color = "red";
             messageArea.style.fontWeight = "bold";
-            
+
             return; // DETENER completamente el proceso
           }
 
