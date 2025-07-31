@@ -57,6 +57,25 @@
       const searchTypeSelect = document.getElementById("searchTypeSelect"); // Get select element
       const searchInput = document.getElementById("searchValue");
 
+      // Función para formatear la descripción del servicio
+      function formatServiceDescription(description) {
+        if (!description || description === "N/A") {
+          return "N/A";
+        }
+        
+        // Reemplazar \n y \\n con <br> para saltos de línea
+        const formatted = description
+          .replace(/\\n/g, '<br>')  // Reemplazar \\n literal
+          .replace(/\n/g, '<br>')   // Reemplazar \n real
+          .split('<br>')            // Dividir por saltos de línea
+          .map(line => line.trim()) // Limpiar espacios
+          .filter(line => line.length > 0) // Filtrar líneas vacías
+          .map(line => `<p style="margin: 5px 0; padding-left: 10px;">• ${line}</p>`) // Formato de lista
+          .join('');
+        
+        return formatted || "N/A";
+      }
+
       // Update input type and style based on dropdown selection
       searchTypeSelect.addEventListener("change", function () {
         if (this.value === "plate") {
@@ -119,7 +138,7 @@
 
           const responseData = await response.json();
           console.log("Respuesta del servidor:", responseData);
-          
+
           // Extraer el array de servicios de la respuesta
           const services = responseData.data || responseData;
 
@@ -166,13 +185,15 @@
               <div class="card-section">
                 <h5>Vehículo</h5>
                 <p><strong>Placa:</strong> ${service.placa}</p>
-                <p><strong>Tipo de Servicio:</strong> ${service.tipo_servicio || "N/A"}</p>
+                <p><strong>Tipo de Servicio:</strong> ${
+                  service.tipo_servicio || "N/A"
+                }</p>
                 <p><strong>Estado:</strong> ${service.estado || "N/A"}</p>
               </div>
               <div class="card-section">
                 <h5>Detalles del Servicio</h5>
                 <p><strong>Descripción:</strong></p>
-                <pre class="work-details">${service.descripcion || "N/A"}</pre> 
+                <div class="work-details">${formatServiceDescription(service.descripcion)}</div> 
                 <p><strong>Total:</strong> ${formattedCost}</p>
               </div>
             `;
