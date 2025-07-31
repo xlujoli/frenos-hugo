@@ -62,17 +62,20 @@
         if (!description || description === "N/A") {
           return "N/A";
         }
-        
+
         // Reemplazar \n y \\n con <br> para saltos de línea
         const formatted = description
-          .replace(/\\n/g, '<br>')  // Reemplazar \\n literal
-          .replace(/\n/g, '<br>')   // Reemplazar \n real
-          .split('<br>')            // Dividir por saltos de línea
-          .map(line => line.trim()) // Limpiar espacios
-          .filter(line => line.length > 0) // Filtrar líneas vacías
-          .map(line => `<p style="margin: 5px 0; padding-left: 10px;">• ${line}</p>`) // Formato de lista
-          .join('');
-        
+          .replace(/\\n/g, "<br>") // Reemplazar \\n literal
+          .replace(/\n/g, "<br>") // Reemplazar \n real
+          .split("<br>") // Dividir por saltos de línea
+          .map((line) => line.trim()) // Limpiar espacios
+          .filter((line) => line.length > 0) // Filtrar líneas vacías
+          .map(
+            (line) =>
+              `<p style="margin: 5px 0; padding-left: 10px;">• ${line}</p>`
+          ) // Formato de lista
+          .join("");
+
         return formatted || "N/A";
       }
 
@@ -193,7 +196,9 @@
               <div class="card-section">
                 <h5>Detalles del Servicio</h5>
                 <p><strong>Descripción:</strong></p>
-                <div class="work-details">${formatServiceDescription(service.descripcion)}</div> 
+                <div class="work-details">${formatServiceDescription(
+                  service.descripcion
+                )}</div> 
                 <p><strong>Total:</strong> ${formattedCost}</p>
               </div>
             `;

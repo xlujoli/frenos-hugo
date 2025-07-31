@@ -11,22 +11,6 @@
         margin: 15px 0;
       }
 
-      #add-invoice-item-btn {
-        background: #28a745;
-        color: white;
-        border: none;
-        padding: 10px 15px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 14px;
-        margin-bottom: 15px;
-        transition: background-color 0.2s;
-      }
-
-      #add-invoice-item-btn:hover {
-        background: #218838;
-      }
-
       #invoice-total-container {
         background: #f8f9fa;
         padding: 12px;
@@ -249,9 +233,6 @@
           <label>Detalles del Servicio:</label>
           <!-- Invoice rows will be added here -->
         </div>
-        <button type="button" id="add-invoice-item-btn">
-          + Añadir Detalle
-        </button>
 
         <div id="invoice-total-container">
           <strong>Total Calculado:</strong>
@@ -694,7 +675,6 @@
       const invoiceItemsContainer = document.getElementById(
         "invoice-items-container"
       );
-      const addInvoiceItemBtn = document.getElementById("add-invoice-item-btn");
       const invoiceTotalSpan = document.getElementById("invoice-total");
 
       // --- Invoice Functions ---
@@ -741,7 +721,7 @@
         });
 
         // Validación para el campo detalle - no permitir pasar al valor si está vacío
-        detailInput.addEventListener("keydown", function(event) {
+        detailInput.addEventListener("keydown", function (event) {
           if (event.key === "Tab" || event.key === "Enter") {
             const detailValue = this.value.trim();
             if (!detailValue) {
@@ -750,26 +730,26 @@
               // Agregar feedback visual temporal
               this.style.borderColor = "#dc3545";
               this.style.backgroundColor = "#fff5f5";
-              
+
               // Restaurar estilo después de 2 segundos
               setTimeout(() => {
                 this.style.borderColor = "#ddd";
                 this.style.backgroundColor = "white";
               }, 2000);
-              
+
               return false;
             }
           }
         });
 
         // Limpiar estilo de error cuando el usuario empiece a escribir
-        detailInput.addEventListener("input", function() {
+        detailInput.addEventListener("input", function () {
           this.style.borderColor = "#ddd";
           this.style.backgroundColor = "white";
         });
 
         // Validación adicional en blur (cuando pierde el foco)
-        detailInput.addEventListener("blur", function() {
+        detailInput.addEventListener("blur", function () {
           const detailValue = this.value.trim();
           if (!detailValue) {
             this.style.borderColor = "#dc3545";
@@ -805,11 +785,6 @@
       }
 
       // --- Initial Setup ---
-      addInvoiceItemBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        createInvoiceRow();
-      });
-
       // Start with one empty row
       createInvoiceRow();
 
@@ -927,19 +902,20 @@
               detailInput.style.borderColor = "#dc3545";
               detailInput.style.backgroundColor = "#fff5f5";
               detailInput.focus();
-              
+
               // Mostrar mensaje temporal
-              messageArea.textContent = "⚠️ Por favor, complete el detalle del servicio antes de continuar.";
+              messageArea.textContent =
+                "⚠️ Por favor, complete el detalle del servicio antes de continuar.";
               messageArea.style.color = "#dc3545";
               messageArea.style.fontWeight = "bold";
-              
+
               // Limpiar mensaje después de 3 segundos
               setTimeout(() => {
                 messageArea.textContent = "";
                 messageArea.style.color = "black";
                 messageArea.style.fontWeight = "normal";
               }, 3000);
-              
+
               return;
             }
 
@@ -948,19 +924,20 @@
               valueInput.style.borderColor = "#dc3545";
               valueInput.style.backgroundColor = "#fff5f5";
               valueInput.focus();
-              
+
               // Mostrar mensaje temporal
-              messageArea.textContent = "⚠️ Por favor, ingrese un valor válido para el servicio.";
+              messageArea.textContent =
+                "⚠️ Por favor, ingrese un valor válido para el servicio.";
               messageArea.style.color = "#dc3545";
               messageArea.style.fontWeight = "bold";
-              
+
               // Limpiar mensaje después de 3 segundos
               setTimeout(() => {
                 messageArea.textContent = "";
                 messageArea.style.color = "black";
                 messageArea.style.fontWeight = "normal";
               }, 3000);
-              
+
               return;
             }
 
