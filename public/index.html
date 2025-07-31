@@ -479,7 +479,7 @@
 
           const responseData = await response.json();
           console.log("📋 Respuesta completa:", responseData);
-          
+
           // Extraer el array de servicios de la respuesta
           const services = responseData.data || responseData;
           console.log("📋 Servicios extraídos:", services.length);
@@ -642,9 +642,6 @@
               console.log("🚫 BLOQUEANDO navegación - número duplicado");
               event.preventDefault(); // Evitar que se mueva al siguiente campo
               this.focus(); // Mantener el foco en este campo
-              alert(
-                `❌ El número de orden ${workOrder} ya existe. Por favor, use un número diferente.`
-              );
               return false;
             } else {
               console.log("✅ Permitiendo navegación - número único");
