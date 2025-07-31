@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Acceso - Frenos Hugo</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+      }
+
+      .login-card {
+        background: white;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+      }
+
+      .login-header {
+        margin-bottom: 30px;
+      }
+
+      .login-header h1 {
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 28px;
+      }
+
+      .login-header p {
+        color: #666;
+        margin: 0;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+        text-align: left;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: 600;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s ease;
+        box-sizing: border-box;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .login-btn {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+      }
+
+      .login-btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .login-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .error-message {
+        background: #fee;
+        color: #c33;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid #c33;
+        text-align: left;
+      }
+
+      .success-message {
+        background: #efe;
+        color: #3c3;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid #3c3;
+        text-align: left;
+      }
+
+      .footer-note {
+        margin-top: 20px;
+        color: #999;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <h1>🚗 Frenos Hugo</h1>
+          <p>Sistema de Gestión de Servicios</p>
+        </div>
+
+        <form id="loginForm">
+          <div id="messageArea"></div>
+
+          <div class="form-group">
+            <label for="username">Usuario:</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              required
+              autocomplete="username"
+              placeholder="Ingrese su usuario"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Contraseña:</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              autocomplete="current-password"
+              placeholder="Ingrese su contraseña"
+            />
+          </div>
+
+          <button type="submit" class="login-btn">
+            Iniciar Sesión
+          </button>
+        </form>
+
+        <div class="footer-note">
+          <p>&copy; 2025 Frenos Hugo. Todos los derechos reservados.</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Verificar si ya está autenticado
+      if (localStorage.getItem('isAuthenticated') === 'true') {
+        window.location.href = 'index.html';
+      }
+
+      const loginForm = document.getElementById('loginForm');
+      const messageArea = document.getElementById('messageArea');
+      const usernameInput = document.getElementById('username');
+      const passwordInput = document.getElementById('password');
+
+      function showMessage(message, type = 'error') {
+        messageArea.innerHTML = `<div class="${type}-message">${message}</div>`;
+        setTimeout(() => {
+          messageArea.innerHTML = '';
+        }, 5000);
+      }
+
+      loginForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value;
+
+        // Limpiar mensajes previos
+        messageArea.innerHTML = '';
+
+        // Validación básica
+        if (!username || !password) {
+          showMessage('Por favor, complete todos los campos.');
+          return;
+        }
+
+        // Verificar credenciales
+        if (username === 'samuel' && password === 'rodeo2025') {
+          // Autenticación exitosa
+          localStorage.setItem('isAuthenticated', 'true');
+          localStorage.setItem('username', username);
+          localStorage.setItem('loginTime', new Date().getTime());
+          
+          showMessage('¡Acceso exitoso! Redirigiendo...', 'success');
+          
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 1500);
+        } else {
+          // Credenciales incorrectas
+          showMessage('Usuario o contraseña incorrectos. Intente nuevamente.');
+          passwordInput.value = '';
+          usernameInput.focus();
+        }
+      });
+
+      // Focus automático en el campo usuario
+      usernameInput.focus();
+
+      // Manejar Enter en los campos
+      usernameInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          passwordInput.focus();
+        }
+      });
+    </script>
+  </body>
+</html>
