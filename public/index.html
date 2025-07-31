@@ -445,10 +445,14 @@
       }
 
       async function verifyWorkOrderNumber(workOrderNumber) {
+        console.log('🔍 Verificando número de orden:', workOrderNumber);
+        console.log('📊 Estado actual:', workOrderVerificationStatus);
+        
         if (
           !workOrderNumber ||
           workOrderNumber === workOrderVerificationStatus.lastCheckedWorkOrder
         ) {
+          console.log('❌ Saliendo - número vacío o ya verificado');
           return;
         }
 
@@ -456,6 +460,7 @@
           workOrderError.style.display = "none";
           workOrderVerificationStatus.lastCheckedWorkOrder = workOrderNumber;
 
+          console.log('🔗 Consultando API /api/services...');
           // Obtener todos los servicios para verificar duplicados
           const response = await fetch("/api/services");
           if (!response.ok) {
@@ -463,11 +468,16 @@
           }
 
           const services = await response.json();
+          console.log('📋 Servicios obtenidos:', services.length);
+          
           const existingService = services.find(
             (service) => service.orden_trabajo == workOrderNumber
           );
+          
+          console.log('🔍 Servicio existente encontrado:', existingService);
 
           if (existingService) {
+            console.log('⚠️ NÚMERO DUPLICADO DETECTADO');
             workOrderError.textContent = `⚠️ El número de orden ${workOrderNumber} ya existe`;
             workOrderError.style.display = "block";
             workOrderVerificationStatus.verified = true;
@@ -477,6 +487,7 @@
             workOrderInput.style.borderColor = "#dc3545";
             workOrderInput.style.backgroundColor = "#fff5f5";
           } else {
+            console.log('✅ Número de orden único');
             workOrderError.style.display = "none";
             workOrderVerificationStatus.verified = true;
             workOrderVerificationStatus.isUnique = true;
@@ -485,8 +496,10 @@
             workOrderInput.style.borderColor = "#ddd";
             workOrderInput.style.backgroundColor = "white";
           }
+          
+          console.log('📊 Estado final:', workOrderVerificationStatus);
         } catch (error) {
-          console.error("Error verificando número de orden:", error);
+          console.error("❌ Error verificando número de orden:", error);
           workOrderError.textContent = "Error al verificar número de orden";
           workOrderError.style.display = "block";
           workOrderVerificationStatus.verified = false;
@@ -595,8 +608,10 @@
       });
 
       workOrderInput.addEventListener("keydown", async function (event) {
+        console.log('⌨️ Keydown evento:', event.key);
         if (event.key === "Tab" || event.key === "Enter") {
           const workOrder = this.value.trim();
+          console.log('🎯 Verificando en keydown:', workOrder);
           if (workOrder) {
             // Verificar inmediatamente al presionar Tab o Enter
             await verifyWorkOrderNumber(workOrder);
@@ -606,12 +621,15 @@
               workOrderVerificationStatus.verified &&
               !workOrderVerificationStatus.isUnique
             ) {
+              console.log('🚫 BLOQUEANDO navegación - número duplicado');
               event.preventDefault(); // Evitar que se mueva al siguiente campo
               this.focus(); // Mantener el foco en este campo
               alert(
                 `❌ El número de orden ${workOrder} ya existe. Por favor, use un número diferente.`
               );
               return false;
+            } else {
+              console.log('✅ Permitiendo navegación - número único');
             }
           }
         }
