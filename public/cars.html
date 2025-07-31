@@ -89,22 +89,31 @@
         const data = Object.fromEntries(formData.entries());
 
         try {
-          // Use the correct route defined in server.js
-          const response = await fetch("/cars/register", {
+          // Usar la API correcta de PostgreSQL
+          const response = await fetch("/api/cars", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
+            body: JSON.stringify({
+              placa: data.plate,
+              marca: data.brand,
+              modelo: data.model,
+              año: data.year ? parseInt(data.year) : null,
+              color: data.color,
+              propietario: data.owner,
+              telefono: data.phone,
+              email: data.email
+            }),
           });
 
           const responseData = await response.json();
 
           if (response.ok) {
-            // Status 201 Created
+            // Status 200 Success
             alert(responseData.message); // Show success message
 
             // Redirect to index.html including plate and workOrder (if it exists)
             let redirectUrl = `index.html?plate=${encodeURIComponent(
-              responseData.plate
+              responseData.data.placa
             )}`;
             if (workOrderFromUrl) {
               // Check if workOrder was passed initially

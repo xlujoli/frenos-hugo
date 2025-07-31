@@ -546,8 +546,17 @@
 
           // ... rest of the submit logic (fetch to register service) ...
           try {
-            const registerResponse = await fetch(`/services/register`, {
+            const registerResponse = await fetch(`/api/services`, {
               method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orden_trabajo: parseInt(workOrderValue),
+                placa: plate,
+                tipo_servicio: "Servicio múltiple",
+                descripcion: workDescription.trim(),
+                costo: calculatedCost
+              }),
+            });
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(serviceData),
             });
