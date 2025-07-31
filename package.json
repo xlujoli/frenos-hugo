@@ -1,19 +1,26 @@
 {
   "name": "frenos-hugo",
-  "version": "2.0.0",
-  "description": "Frenos Hugo - Sistema de gestión",
-  "main": "server.js",
+  "version": "3.0.0",
+  "description": "Frenos Hugo - Sistema de gestión con PostgreSQL",
+  "main": "server-postgres.js",
   "engines": {
     "node": "18.x"
   },
   "scripts": {
-    "start": "node server.js",
+    "start": "node server-postgres.js",
     "build": "echo 'Build completed successfully'"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1"
   },
-  "keywords": ["frenos", "gestión", "render"],
+  "keywords": [
+    "frenos",
+    "gestión",
+    "postgresql",
+    "render"
+  ],
   "author": "Frenos Hugo",
   "license": "MIT"
 }
