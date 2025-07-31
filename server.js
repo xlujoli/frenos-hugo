@@ -1,10 +1,17 @@
-console.log("🚀 Iniciando Frenos Hugo v2.0");
+console.log("🚀 Iniciando Frenos Hugo v3.0 - PostgreSQL");
+
+// Cargar variables de entorno
+require("dotenv").config();
 
 const express = require("express");
 const path = require("path");
+const PostgresDatabase = require("./src/models/postgresDb");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Inicializar base de datos
+const db = new PostgresDatabase();
 
 // Middleware básico
 app.use(express.json());
@@ -16,31 +23,36 @@ app.use((req, res, next) => {
   next();
 });
 
-// Ruta de salud
+// Middleware para verificar conexión a DB
+app.use(async (req, res, next) => {
+  if (!db.isConnected && req.path.startsWith("/api/")) {
+    return res.status(503).json({
+      error: "Servicio no disponible",
+      message: "Base de datos no conectada",
+    });
+  }
+  next();
+});
+
+// Rutas de salud
 app.get("/health", (req, res) => {
   res.json({
     status: "OK",
     timestamp: new Date().toISOString(),
-    version: "2.0.0",
+    version: "3.0.0",
+    database: db.isConnected ? "PostgreSQL ✅" : "Desconectada ❌",
   });
 });
 
-// Ruta de información
 app.get("/info", (req, res) => {
   res.json({
     app: "Frenos Hugo",
-    version: "2.0.0 - Híbrido",
-    database: "SQLite (Público)",
-    admin: "Disponible en Oracle APEX",
+    version: "3.0.0 - PostgreSQL",
+    database: "PostgreSQL",
+    features: ["Almacenamiento ilimitado", "ACID compliance", "Escalabilidad"],
     status: "✅ Funcionando",
   });
 });
-
-// Datos en memoria (temporal)
-let servicios = [];
-let vehiculos = [];
-let nextServiceId = 1;
-let nextVehicleId = 1;
 
 // Rutas principales
 app.get("/", (req, res) => {
@@ -56,114 +68,223 @@ app.get("/consultation.html", (req, res) => {
 });
 
 // API Endpoints para servicios
-app.post("/api/services", (req, res) => {
+app.post("/api/services", async (req, res) => {
   try {
-    const servicio = {
-      id: nextServiceId++,
-      ...req.body,
-      fecha: new Date().toISOString()
-    };
-    servicios.push(servicio);
-    
+    const servicio = await db.createService(req.body);
+
     res.json({
       success: true,
       message: "Servicio registrado exitosamente",
-      id: servicio.id
+      data: servicio,
     });
   } catch (error) {
+    console.error("Error creando servicio:", error);
     res.status(500).json({
       success: false,
-      message: "Error al registrar servicio"
+      message: "Error al registrar servicio",
+      error: error.message,
     });
   }
 });
 
-app.get("/api/services", (req, res) => {
-  res.json({
-    success: true,
-    data: servicios,
-    count: servicios.length
-  });
-});
+app.get("/api/services", async (req, res) => {
+  try {
+    const filters = {
+      placa: req.query.placa,
+      estado: req.query.estado,
+      fecha_desde: req.query.fecha_desde,
+      limit: req.query.limit ? parseInt(req.query.limit) : undefined,
+    };
 
-app.delete("/api/services/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  const index = servicios.findIndex(s => s.id === id);
-  
-  if (index > -1) {
-    servicios.splice(index, 1);
+    const servicios = await db.getServices(filters);
+
     res.json({
       success: true,
-      message: "Servicio eliminado exitosamente"
+      data: servicios,
+      count: servicios.length,
     });
-  } else {
-    res.status(404).json({
+  } catch (error) {
+    console.error("Error obteniendo servicios:", error);
+    res.status(500).json({
       success: false,
-      message: "Servicio no encontrado"
+      message: "Error al obtener servicios",
+      error: error.message,
+    });
+  }
+});
+
+app.delete("/api/services/:id", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const servicioEliminado = await db.deleteService(id);
+
+    if (servicioEliminado) {
+      res.json({
+        success: true,
+        message: "Servicio eliminado exitosamente",
+        data: servicioEliminado,
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        message: "Servicio no encontrado",
+      });
+    }
+  } catch (error) {
+    console.error("Error eliminando servicio:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error al eliminar servicio",
+      error: error.message,
+    });
+  }
+});
+
+app.put("/api/services/:id", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const servicioActualizado = await db.updateService(id, req.body);
+
+    if (servicioActualizado) {
+      res.json({
+        success: true,
+        message: "Servicio actualizado exitosamente",
+        data: servicioActualizado,
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        message: "Servicio no encontrado",
+      });
+    }
+  } catch (error) {
+    console.error("Error actualizando servicio:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error al actualizar servicio",
+      error: error.message,
     });
   }
 });
 
 // API Endpoints para vehículos
-app.post("/api/cars", (req, res) => {
+app.post("/api/cars", async (req, res) => {
   try {
-    const vehiculo = {
-      id: nextVehicleId++,
-      ...req.body,
-      fecha: new Date().toISOString()
-    };
-    vehiculos.push(vehiculo);
-    
+    const vehiculo = await db.createVehicle(req.body);
+
     res.json({
       success: true,
       message: "Vehículo registrado exitosamente",
-      id: vehiculo.id
+      data: vehiculo,
     });
   } catch (error) {
+    console.error("Error creando vehículo:", error);
+
+    // Manejar error de placa duplicada
+    if (error.code === "23505") {
+      return res.status(400).json({
+        success: false,
+        message: "Ya existe un vehículo con esta placa",
+        error: "Placa duplicada",
+      });
+    }
+
     res.status(500).json({
       success: false,
-      message: "Error al registrar vehículo"
+      message: "Error al registrar vehículo",
+      error: error.message,
     });
   }
 });
 
-app.get("/api/cars", (req, res) => {
-  res.json({
-    success: true,
-    data: vehiculos,
-    count: vehiculos.length
-  });
-});
+app.get("/api/cars", async (req, res) => {
+  try {
+    const filters = {
+      placa: req.query.placa,
+      propietario: req.query.propietario,
+    };
 
-app.delete("/api/cars/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  const index = vehiculos.findIndex(v => v.id === id);
-  
-  if (index > -1) {
-    vehiculos.splice(index, 1);
+    const vehiculos = await db.getVehicles(filters);
+
     res.json({
       success: true,
-      message: "Vehículo eliminado exitosamente"
+      data: vehiculos,
+      count: vehiculos.length,
     });
-  } else {
-    res.status(404).json({
+  } catch (error) {
+    console.error("Error obteniendo vehículos:", error);
+    res.status(500).json({
       success: false,
-      message: "Vehículo no encontrado"
+      message: "Error al obtener vehículos",
+      error: error.message,
+    });
+  }
+});
+
+app.delete("/api/cars/:id", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const vehiculoEliminado = await db.deleteVehicle(id);
+
+    if (vehiculoEliminado) {
+      res.json({
+        success: true,
+        message: "Vehículo eliminado exitosamente",
+        data: vehiculoEliminado,
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        message: "Vehículo no encontrado",
+      });
+    }
+  } catch (error) {
+    console.error("Error eliminando vehículo:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error al eliminar vehículo",
+      error: error.message,
     });
   }
 });
 
 // Endpoint de estadísticas
-app.get("/api/stats", (req, res) => {
-  res.json({
-    success: true,
-    stats: {
-      totalServicios: servicios.length,
-      totalVehiculos: vehiculos.length,
-      ultimoServicio: servicios.length > 0 ? servicios[servicios.length - 1] : null,
-      ultimoVehiculo: vehiculos.length > 0 ? vehiculos[vehiculos.length - 1] : null
-    }
-  });
+app.get("/api/stats", async (req, res) => {
+  try {
+    const stats = await db.getStats();
+
+    res.json({
+      success: true,
+      stats: stats,
+    });
+  } catch (error) {
+    console.error("Error obteniendo estadísticas:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error al obtener estadísticas",
+      error: error.message,
+    });
+  }
+});
+
+// Endpoint para buscar servicios por placa
+app.get("/api/services/search/:placa", async (req, res) => {
+  try {
+    const servicios = await db.getServices({ placa: req.params.placa });
+
+    res.json({
+      success: true,
+      data: servicios,
+      count: servicios.length,
+    });
+  } catch (error) {
+    console.error("Error buscando servicios:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error al buscar servicios",
+      error: error.message,
+    });
+  }
 });
 
 // Manejo de errores 404
@@ -171,7 +292,7 @@ app.use((req, res) => {
   res.status(404).json({
     error: "Ruta no encontrada",
     path: req.url,
-    message: "La funcionalidad estará disponible pronto",
+    message: "Verifica la URL y el método HTTP",
   });
 });
 
@@ -184,26 +305,53 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Iniciar servidor
-const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Servidor ejecutándose en puerto ${PORT}`);
-  console.log(`🌐 URL: http://localhost:${PORT}`);
-});
+// Función para inicializar la aplicación
+async function startServer() {
+  try {
+    // Inicializar base de datos
+    await db.init();
 
-server.on("error", (error) => {
-  console.error("❌ Error del servidor:", error);
-  if (error.code === "EADDRINUSE") {
-    console.error(`Puerto ${PORT} está en uso`);
+    // Iniciar servidor
+    const server = app.listen(PORT, "0.0.0.0", () => {
+      console.log(`✅ Servidor ejecutándose en puerto ${PORT}`);
+      console.log(`🌐 URL: http://localhost:${PORT}`);
+      console.log(`🗄️ Base de datos: PostgreSQL conectada`);
+    });
+
+    server.on("error", (error) => {
+      console.error("❌ Error del servidor:", error);
+      if (error.code === "EADDRINUSE") {
+        console.error(`Puerto ${PORT} está en uso`);
+      }
+    });
+
+    // Manejo de señales para cierre limpio
+    process.on("SIGTERM", async () => {
+      console.log("🔄 Cerrando servidor...");
+      await db.close();
+      server.close(() => {
+        console.log("✅ Servidor cerrado");
+        process.exit(0);
+      });
+    });
+
+    process.on("SIGINT", async () => {
+      console.log("🔄 Cerrando servidor...");
+      await db.close();
+      server.close(() => {
+        console.log("✅ Servidor cerrado");
+        process.exit(0);
+      });
+    });
+  } catch (error) {
+    console.error("❌ Error iniciando servidor:", error);
+    process.exit(1);
   }
-});
+}
 
-// Manejo de señales para cierre limpio
-process.on("SIGTERM", () => {
-  console.log("🔄 Cerrando servidor...");
-  server.close(() => {
-    console.log("✅ Servidor cerrado");
-    process.exit(0);
-  });
-});
+// Solo iniciar si no estamos en modo test
+if (require.main === module) {
+  startServer();
+}
 
 module.exports = app;

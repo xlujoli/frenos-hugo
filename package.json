@@ -2,13 +2,13 @@
   "name": "frenos-hugo",
   "version": "3.0.0",
   "description": "Frenos Hugo - Sistema robusto con PostgreSQL",
-  "main": "server-postgres.js",
+  "main": "server.js",
   "engines": {
     "node": "18.x"
   },
   "scripts": {
-    "start": "node server-postgres.js",
-    "dev": "nodemon server-postgres.js",
+    "start": "node server.js",
+    "dev": "nodemon server.js",
     "build": "echo 'Build completed successfully'"
   },
   "dependencies": {
