@@ -253,7 +253,7 @@ app.get("/api/cars/verify/:plate", async (req, res) => {
   try {
     const plate = req.params.plate.toUpperCase();
     const vehiculos = await db.getVehicles({ placa: plate });
-    
+
     if (vehiculos && vehiculos.length > 0) {
       res.json({
         success: true,

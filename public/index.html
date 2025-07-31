@@ -58,6 +58,21 @@
         display: block;
         color: #495057;
       }
+      
+      #plate-status {
+        min-height: 24px;
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+        border: 1px solid transparent;
+      }
+      
+      #plate-status:empty {
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -85,6 +100,11 @@
           style="text-transform: uppercase"
           required
         />
+        
+        <!-- Estado de verificación de placa -->
+        <div id="plate-status" style="margin-top: 8px; min-height: 24px; font-size: 14px; font-weight: 500;">
+          <!-- Aquí se mostrará el estado de verificación -->
+        </div>
 
         <!-- Invoice Section -->
         <div id="invoice-items-container">
@@ -117,13 +137,118 @@
       const plateInput = document.getElementById("plate");
       const workOrderInput = document.getElementById("workOrder");
       const messageArea = document.getElementById("message-area");
+      const plateStatus = document.getElementById("plate-status");
+
+      // Variable para almacenar el estado de verificación de la placa
+      let plateVerificationStatus = {
+        verified: false,
+        exists: false,
+        vehicleData: null,
+        lastCheckedPlate: ""
+      };
 
       if (plateFromUrl) {
         plateInput.value = plateFromUrl;
+        // Verificar automáticamente si la placa viene de URL
+        setTimeout(() => verifyPlateAutomatically(plateFromUrl), 500);
       }
       if (workOrderFromUrl) {
         workOrderInput.value = workOrderFromUrl;
       }
+
+      // --- Funciones de verificación de placa ---
+      async function verifyPlateAutomatically(plate) {
+        if (!plate || plate.length < 3) {
+          plateStatus.innerHTML = "";
+          plateVerificationStatus.verified = false;
+          return;
+        }
+
+        const cleanPlate = plate.toUpperCase().trim();
+        
+        // No verificar si ya se verificó la misma placa
+        if (plateVerificationStatus.lastCheckedPlate === cleanPlate && plateVerificationStatus.verified) {
+          return;
+        }
+
+        try {
+          plateStatus.innerHTML = `<span style="color: #007bff;">🔍 Verificando placa ${cleanPlate}...</span>`;
+          
+          const response = await fetch(`/api/cars/verify/${encodeURIComponent(cleanPlate)}`);
+          const data = await response.json();
+
+          if (response.ok && data.success) {
+            plateVerificationStatus.verified = true;
+            plateVerificationStatus.lastCheckedPlate = cleanPlate;
+            
+            if (data.exists) {
+              plateVerificationStatus.exists = true;
+              plateVerificationStatus.vehicleData = data.data;
+              
+              plateStatus.innerHTML = `
+                <span style="color: #28a745;">
+                  ✅ ${data.data.marca} ${data.data.modelo} - ${data.data.propietario}
+                </span>
+              `;
+            } else {
+              plateVerificationStatus.exists = false;
+              plateVerificationStatus.vehicleData = null;
+              
+              plateStatus.innerHTML = `
+                <span style="color: #dc3545;">
+                  ❌ Placa no registrada - 
+                  <a href="#" onclick="redirectToCreateVehicle('${cleanPlate}')" style="color: #007bff; text-decoration: underline;">
+                    Registrar vehículo
+                  </a>
+                </span>
+              `;
+            }
+          } else {
+            plateStatus.innerHTML = `<span style="color: #dc3545;">❌ Error al verificar placa</span>`;
+            plateVerificationStatus.verified = false;
+          }
+        } catch (error) {
+          console.error("Error verificando placa:", error);
+          plateStatus.innerHTML = `<span style="color: #dc3545;">❌ Error de conexión</span>`;
+          plateVerificationStatus.verified = false;
+        }
+      }
+
+      function redirectToCreateVehicle(plate) {
+        const workOrder = workOrderInput.value.trim();
+        let url = `cars.html?plate=${encodeURIComponent(plate)}`;
+        if (workOrder) {
+          url += `&workOrder=${encodeURIComponent(workOrder)}`;
+        }
+        window.location.href = url;
+      }
+
+      // Event listeners para verificación automática de placa
+      plateInput.addEventListener('blur', function() {
+        const plate = this.value.trim();
+        if (plate) {
+          verifyPlateAutomatically(plate);
+        }
+      });
+
+      plateInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Tab' || event.key === 'Enter') {
+          const plate = this.value.trim();
+          if (plate) {
+            setTimeout(() => verifyPlateAutomatically(plate), 100);
+          }
+        }
+      });
+
+      // Limpiar estado cuando el usuario está escribiendo
+      plateInput.addEventListener('input', function() {
+        const currentPlate = this.value.trim().toUpperCase();
+        if (currentPlate !== plateVerificationStatus.lastCheckedPlate) {
+          plateStatus.innerHTML = "";
+          plateVerificationStatus.verified = false;
+          plateVerificationStatus.exists = false;
+        }
+      });
 
       const invoiceItemsContainer = document.getElementById(
         "invoice-items-container"
@@ -229,60 +354,58 @@
             return;
           }
 
-          // --- Verificar si la placa existe en la base de datos ---
-          try {
+          // --- Verificar placa usando la verificación previa ---
+          if (!plateVerificationStatus.verified || plateVerificationStatus.lastCheckedPlate !== plate) {
+            // Si no se ha verificado o la placa cambió, verificar ahora
             messageArea.textContent = "Verificando vehículo...";
             messageArea.style.color = "blue";
+            
+            await verifyPlateAutomatically(plate);
+            
+            // Esperar un momento para que se complete la verificación
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
 
-            const verifyResponse = await fetch(`/api/cars/verify/${encodeURIComponent(plate)}`);
-            const verifyData = await verifyResponse.json();
+          // Verificar el estado actual de la placa
+          if (!plateVerificationStatus.verified) {
+            messageArea.textContent = "Error al verificar el vehículo. Intente nuevamente.";
+            messageArea.style.color = "red";
+            return;
+          }
 
-            if (!verifyResponse.ok || !verifyData.success) {
-              messageArea.textContent = "Error al verificar el vehículo. Intente nuevamente.";
-              messageArea.style.color = "red";
-              return;
-            }
-
-            // Si la placa no existe, redirigir al formulario de crear vehículo
-            if (!verifyData.exists) {
-              const confirmCreate = confirm(
-                `❌ VEHÍCULO NO REGISTRADO\\n\\n` +
+          if (!plateVerificationStatus.exists) {
+            const confirmCreate = confirm(
+              `❌ VEHÍCULO NO REGISTRADO\\n\\n` +
                 `La placa "${plate}" no se encuentra en el sistema.\\n\\n` +
                 `Para continuar con el registro del servicio, primero debe registrar el vehículo.\\n\\n` +
                 `¿Desea registrar este vehículo ahora?\\n\\n` +
                 `• Presione 'Aceptar' para ir al formulario de registro de vehículos\\n` +
                 `• Presione 'Cancelar' para corregir la placa`
-              );
-              
-              if (confirmCreate) {
-                // Redirigir al formulario de crear vehículo con la placa y orden de trabajo
-                window.location.href = `cars.html?plate=${encodeURIComponent(plate)}&workOrder=${encodeURIComponent(workOrderValue)}`;
-                return;
-              } else {
-                messageArea.textContent = "❌ Registro cancelado. Verifique la placa o registre el vehículo primero.";
-                messageArea.style.color = "orange";
-                plateInput.focus();
-                plateInput.select();
-                return;
-              }
+            );
+
+            if (confirmCreate) {
+              // Redirigir al formulario de crear vehículo con la placa y orden de trabajo
+              window.location.href = `cars.html?plate=${encodeURIComponent(plate)}&workOrder=${encodeURIComponent(workOrderValue)}`;
+              return;
+            } else {
+              messageArea.textContent = "❌ Registro cancelado. Verifique la placa o registre el vehículo primero.";
+              messageArea.style.color = "orange";
+              plateInput.focus();
+              plateInput.select();
+              return;
             }
-
-            // Si la placa existe, continuar con el registro del servicio
-            messageArea.textContent = `✅ Vehículo verificado: ${verifyData.data.marca} ${verifyData.data.modelo} - Propietario: ${verifyData.data.propietario}`;
-            messageArea.style.color = "green";
-
-            // Pequeña pausa para mostrar la verificación exitosa
-            setTimeout(() => {
-              messageArea.textContent = "Procesando detalles del servicio...";
-              messageArea.style.color = "blue";
-            }, 1000);
-
-          } catch (error) {
-            console.error("Error verificando placa:", error);
-            messageArea.textContent = "Error de conexión al verificar el vehículo. Intente nuevamente.";
-            messageArea.style.color = "red";
-            return;
           }
+
+          // Si llegamos aquí, la placa existe y está verificada
+          const vehicleData = plateVerificationStatus.vehicleData;
+          messageArea.textContent = `✅ Vehículo verificado: ${vehicleData.marca} ${vehicleData.modelo} - Propietario: ${vehicleData.propietario}`;
+          messageArea.style.color = "green";
+
+          // Pequeña pausa para mostrar la verificación exitosa
+          setTimeout(() => {
+            messageArea.textContent = "Procesando detalles del servicio...";
+            messageArea.style.color = "blue";
+          }, 800);
 
           // --- Gather Invoice Data ---
           const invoiceRows =

@@ -16,15 +16,26 @@
         </ul>
       </nav>
     </header>
-        <main>
+    <main>
       <!-- Changed action/method, will be handled by JS -->
       <form class="card" id="car-registration-form">
         <h3>Información del Vehículo</h3>
-        
+
         <!-- Mensaje informativo si viene desde el formulario de servicios -->
-        <div id="info-message" style="display: none; background: #e3f2fd; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #2196f3;">
-          <strong>📋 Registro requerido:</strong><br>
-          Debe completar el registro del vehículo para continuar con el servicio.
+        <div
+          id="info-message"
+          style="
+            display: none;
+            background: #e3f2fd;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            border-left: 4px solid #2196f3;
+          "
+        >
+          <strong>📋 Registro requerido:</strong><br />
+          Debe completar el registro del vehículo para continuar con el
+          servicio.
         </div>
 
         <label for="plate">Placa:</label>
@@ -86,7 +97,7 @@
 
       if (plateFromUrl) {
         document.getElementById("plate").value = plateFromUrl;
-        
+
         // Mostrar mensaje informativo si viene desde el formulario de servicios
         if (workOrderFromUrl) {
           infoMessage.style.display = "block";
