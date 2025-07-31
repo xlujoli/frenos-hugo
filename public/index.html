@@ -431,6 +431,11 @@
         workOrderError.style.display = "none";
         messageArea.textContent = "";
         messageArea.style.color = "black";
+        
+        // Restaurar apariencia normal de los campos
+        workOrderInput.style.borderColor = "#ddd";
+        workOrderInput.style.backgroundColor = "white";
+        
         invoiceItemsContainer.innerHTML =
           "<label>Detalles del Servicio:</label>";
         createInvoiceRow();
@@ -467,10 +472,18 @@
             workOrderError.style.display = "block";
             workOrderVerificationStatus.verified = true;
             workOrderVerificationStatus.isUnique = false;
+            
+            // Hacer que el campo se vea como error
+            workOrderInput.style.borderColor = "#dc3545";
+            workOrderInput.style.backgroundColor = "#fff5f5";
           } else {
             workOrderError.style.display = "none";
             workOrderVerificationStatus.verified = true;
             workOrderVerificationStatus.isUnique = true;
+            
+            // Restaurar apariencia normal del campo
+            workOrderInput.style.borderColor = "#ddd";
+            workOrderInput.style.backgroundColor = "white";
           }
         } catch (error) {
           console.error("Error verificando número de orden:", error);
@@ -478,6 +491,10 @@
           workOrderError.style.display = "block";
           workOrderVerificationStatus.verified = false;
           workOrderVerificationStatus.isUnique = false;
+          
+          // Hacer que el campo se vea como error
+          workOrderInput.style.borderColor = "#dc3545";
+          workOrderInput.style.backgroundColor = "#fff5f5";
         }
       }
 
@@ -581,8 +598,27 @@
         if (event.key === "Tab" || event.key === "Enter") {
           const workOrder = this.value.trim();
           if (workOrder) {
-            setTimeout(() => verifyWorkOrderNumber(workOrder), 100);
+            // Verificar inmediatamente al presionar Tab o Enter
+            verifyWorkOrderNumber(workOrder).then(() => {
+              // Si el número de orden no es único, bloquear la navegación
+              if (workOrderVerificationStatus.verified && !workOrderVerificationStatus.isUnique) {
+                event.preventDefault(); // Evitar que se mueva al siguiente campo
+                this.focus(); // Mantener el foco en este campo
+                return false;
+              }
+            });
           }
+        }
+      });
+
+      // Bloquear envío de formulario si hay número duplicado
+      workOrderInput.addEventListener("input", function() {
+        // Limpiar estado anterior cuando el usuario está escribiendo
+        const currentWorkOrder = this.value.trim();
+        if (currentWorkOrder !== workOrderVerificationStatus.lastCheckedWorkOrder) {
+          workOrderError.style.display = "none";
+          workOrderVerificationStatus.verified = false;
+          workOrderVerificationStatus.isUnique = true;
         }
       });
 
@@ -709,13 +745,17 @@
             await new Promise((resolve) => setTimeout(resolve, 500));
           }
 
-          // Verificar si el número de orden es único
+          // BLOQUEAR ENVÍO si el número de orden ya existe
           if (
             workOrderVerificationStatus.verified &&
             !workOrderVerificationStatus.isUnique
           ) {
+            // Mostrar el error y enfocar el campo
+            workOrderError.textContent = `⚠️ El número de orden ${workOrderValue} ya existe. No se puede continuar.`;
+            workOrderError.style.display = "block";
             workOrderInput.focus();
-            return;
+            workOrderInput.select(); // Seleccionar el texto para fácil corrección
+            return; // DETENER completamente el proceso
           }
 
           // --- Verificar placa usando la verificación previa ---
