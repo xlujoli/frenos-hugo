@@ -83,21 +83,15 @@ class PostgresDatabase {
         CREATE INDEX IF NOT EXISTS idx_vehiculos_fecha ON vehiculos (fecha_registro);
       `);
 
-      await this.pool.query(`
-        CREATE TABLE IF NOT EXISTS historial_servicios (
-          id SERIAL PRIMARY KEY,
-          servicio_id INTEGER REFERENCES servicios(id) ON DELETE CASCADE,
-          accion VARCHAR(50) NOT NULL,
-          descripcion TEXT,
-          usuario VARCHAR(100),
-          fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-      `);
-
-      await this.pool.query(`
-        CREATE INDEX IF NOT EXISTS idx_historial_servicio_id ON historial_servicios (servicio_id);
-        CREATE INDEX IF NOT EXISTS idx_historial_fecha ON historial_servicios (fecha);
-      `);
+      // Migración: Eliminar tabla historial_servicios si existe (ya no se usa)
+      try {
+        await this.pool.query(`
+          DROP TABLE IF EXISTS historial_servicios CASCADE;
+        `);
+        console.log("✅ Migración: Tabla historial_servicios eliminada");
+      } catch (error) {
+        console.log("⚠️ Tabla historial_servicios ya había sido eliminada o no existía");
+      }
 
       // Migración: Eliminar columna tipo_servicio si existe
       try {
@@ -106,7 +100,9 @@ class PostgresDatabase {
         `);
         console.log("✅ Migración: Columna tipo_servicio eliminada");
       } catch (error) {
-        console.log("⚠️ Columna tipo_servicio ya había sido eliminada o no existía");
+        console.log(
+          "⚠️ Columna tipo_servicio ya había sido eliminada o no existía"
+        );
       }
 
       console.log("✅ Tablas creadas/verificadas en PostgreSQL");
