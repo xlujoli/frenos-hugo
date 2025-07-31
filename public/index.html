@@ -5,6 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Registrar Servicios - Frenos Hugo</title>
     <link rel="stylesheet" href="styles.css" />
+    <style>
+      /* Estilos adicionales para mejorar el formulario */
+      #invoice-items-container {
+        margin: 15px 0;
+      }
+      
+      #add-invoice-item-btn {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-bottom: 15px;
+        transition: background-color 0.2s;
+      }
+      
+      #add-invoice-item-btn:hover {
+        background: #218838;
+      }
+      
+      #invoice-total-container {
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 6px;
+        margin: 15px 0;
+        text-align: right;
+        border: 1px solid #dee2e6;
+      }
+      
+      #invoice-total {
+        color: #007bff;
+        font-size: 18px;
+        font-weight: bold;
+      }
+      
+      .card input[type="number"], 
+      .card input[type="text"] {
+        padding: 10px;
+        font-size: 14px;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      
+      .card label {
+        font-weight: 600;
+        margin-bottom: 5px;
+        display: block;
+        color: #495057;
+      }
+    </style>
   </head>
   <body>
     <header>
@@ -79,13 +133,13 @@
       function createInvoiceRow() {
         const rowDiv = document.createElement("div");
         rowDiv.classList.add("invoice-item-row");
-        rowDiv.style.cssText = "display: flex; gap: 10px; margin-bottom: 10px; align-items: center;";
+        rowDiv.style.cssText = "display: flex; gap: 8px; margin-bottom: 12px; align-items: center; width: 100%;";
 
         const detailInput = document.createElement("input");
         detailInput.type = "text";
         detailInput.placeholder = "Detalle del servicio";
         detailInput.classList.add("invoice-item-detail");
-        detailInput.style.cssText = "flex: 2; text-transform: uppercase; padding: 8px; border: 1px solid #ddd; border-radius: 4px;";
+        detailInput.style.cssText = "flex: 3; text-transform: uppercase; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; min-width: 200px;";
 
         const valueInput = document.createElement("input");
         valueInput.type = "number";
@@ -93,13 +147,13 @@
         valueInput.classList.add("invoice-item-value");
         valueInput.min = "0";
         valueInput.step = "0.01";
-        valueInput.style.cssText = "flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;";
+        valueInput.style.cssText = "flex: 1.5; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; min-width: 120px;";
 
         const removeBtn = document.createElement("button");
         removeBtn.type = "button";
-        removeBtn.textContent = "−";
+        removeBtn.textContent = "×";
         removeBtn.classList.add("remove-invoice-item-btn");
-        removeBtn.style.cssText = "background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;";
+        removeBtn.style.cssText = "background: #dc3545; color: white; border: none; padding: 6px 8px; border-radius: 50%; cursor: pointer; font-size: 14px; font-weight: bold; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;";
 
         rowDiv.appendChild(detailInput);
         rowDiv.appendChild(valueInput);
