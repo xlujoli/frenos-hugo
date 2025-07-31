@@ -5,174 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Registrar Vehículo - Frenos Hugo</title>
     <link rel="stylesheet" href="styles.css" />
-    <style>
-      /* Modal personalizado para éxito del registro */
-      .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.6);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
-      }
-      
-      .modal-overlay.show {
-        opacity: 1;
-        visibility: visible;
-      }
-      
-      .modal-content {
-        background: white;
-        padding: 35px;
-        border-radius: 15px;
-        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-        max-width: 550px;
-        width: 90%;
-        max-height: 85vh;
-        overflow-y: auto;
-        transform: translateY(-30px) scale(0.95);
-        transition: transform 0.3s ease;
-      }
-      
-      .modal-overlay.show .modal-content {
-        transform: translateY(0) scale(1);
-      }
-      
-      .modal-header {
-        text-align: center;
-        margin-bottom: 25px;
-      }
-      
-      .success-icon {
-        font-size: 64px;
-        margin-bottom: 20px;
-        display: block;
-        animation: successPulse 1.5s ease-in-out;
-      }
-      
-      @keyframes successPulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-      }
-      
-      .modal-title {
-        font-size: 28px;
-        font-weight: bold;
-        color: #28a745;
-        margin-bottom: 12px;
-      }
-      
-      .modal-subtitle {
-        font-size: 18px;
-        color: #6c757d;
-        margin-bottom: 25px;
-      }
-      
-      .vehicle-details {
-        background: #f8f9fa;
-        border: 2px solid #e9ecef;
-        padding: 20px;
-        border-radius: 10px;
-        margin: 20px 0;
-      }
-      
-      .vehicle-details h4 {
-        color: #495057;
-        margin-bottom: 15px;
-        font-size: 18px;
-        text-align: center;
-        border-bottom: 2px solid #dee2e6;
-        padding-bottom: 10px;
-      }
-      
-      .detail-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 10px;
-        padding: 8px 0;
-        border-bottom: 1px solid #e9ecef;
-      }
-      
-      .detail-row:last-child {
-        border-bottom: none;
-        margin-bottom: 0;
-      }
-      
-      .detail-label {
-        font-weight: 600;
-        color: #6c757d;
-      }
-      
-      .detail-value {
-        font-weight: bold;
-        color: #495057;
-        font-family: 'Courier New', monospace;
-      }
-      
-      .next-steps {
-        background: #e3f2fd;
-        border-left: 4px solid #2196f3;
-        padding: 15px 20px;
-        border-radius: 0 8px 8px 0;
-        margin: 20px 0;
-      }
-      
-      .next-steps h5 {
-        color: #1976d2;
-        margin-bottom: 10px;
-        font-size: 16px;
-      }
-      
-      .next-steps p {
-        color: #424242;
-        margin: 0;
-        line-height: 1.5;
-      }
-      
-      .modal-actions {
-        display: flex;
-        gap: 15px;
-        justify-content: center;
-        margin-top: 25px;
-      }
-      
-      .modal-btn {
-        padding: 15px 30px;
-        border: none;
-        border-radius: 10px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        min-width: 160px;
-      }
-      
-      .modal-btn-primary {
-        background: linear-gradient(135deg, #007bff, #0056b3);
-        color: white;
-        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-      }
-      
-      .modal-btn-primary:hover {
-        background: linear-gradient(135deg, #0056b3, #004085);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
-      }
-      
-      .countdown {
-        font-size: 14px;
-        color: #6c757d;
-        text-align: center;
-        margin-top: 15px;
-      }
-    </style>
   </head>
   <body>
     <header>
@@ -248,55 +80,6 @@
         <button type="submit">Registrar Vehículo</button>
       </form>
       <div id="message-area" style="margin-top: 15px; text-align: center"></div>
-      
-      <!-- Modal de éxito del registro -->
-      <div id="success-modal" class="modal-overlay">
-        <div class="modal-content">
-          <div class="modal-header">
-            <span class="success-icon">🚗✅</span>
-            <h3 class="modal-title">¡Vehículo Registrado!</h3>
-            <p class="modal-subtitle">El registro se completó exitosamente</p>
-          </div>
-          
-          <div class="vehicle-details">
-            <h4>📋 Información Registrada</h4>
-            <div class="detail-row">
-              <span class="detail-label">Placa:</span>
-              <span class="detail-value" id="success-plate">-</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Marca:</span>
-              <span class="detail-value" id="success-brand">-</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Modelo:</span>
-              <span class="detail-value" id="success-model">-</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Propietario:</span>
-              <span class="detail-value" id="success-owner">-</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Teléfono:</span>
-              <span class="detail-value" id="success-phone">-</span>
-            </div>
-          </div>
-          
-          <div id="next-steps-container">
-            <!-- Se llenará dinámicamente -->
-          </div>
-          
-          <div class="modal-actions">
-            <button class="modal-btn modal-btn-primary" id="continue-btn">
-              <span id="continue-text">Continuar</span>
-            </button>
-          </div>
-          
-          <div class="countdown" id="countdown-text">
-            <!-- Contador automático -->
-          </div>
-        </div>
-      </div>
     </main>
     <footer>
       <p>&copy; 2025 Frenos Hugo. Todos los derechos reservados.</p>
@@ -323,89 +106,6 @@
             La placa <strong>${plateFromUrl}</strong> no está registrada. Complete este formulario para continuar con el servicio de la orden de trabajo <strong>#${workOrderFromUrl}</strong>.
           `;
         }
-      }
-
-      // --- Funciones del modal de éxito ---
-      function showSuccessModal(vehicleData, workOrder = null) {
-        const modal = document.getElementById('success-modal');
-        const nextStepsContainer = document.getElementById('next-steps-container');
-        const continueBtn = document.getElementById('continue-btn');
-        const continueText = document.getElementById('continue-text');
-        const countdownText = document.getElementById('countdown-text');
-        
-        // Llenar información del vehículo
-        document.getElementById('success-plate').textContent = vehicleData.placa || '-';
-        document.getElementById('success-brand').textContent = vehicleData.marca || '-';
-        document.getElementById('success-model').textContent = vehicleData.modelo || '-';
-        document.getElementById('success-owner').textContent = vehicleData.propietario || '-';
-        document.getElementById('success-phone').textContent = vehicleData.telefono || '-';
-        
-        // Configurar próximos pasos según el contexto
-        if (workOrder) {
-          nextStepsContainer.innerHTML = `
-            <div class="next-steps">
-              <h5>🎯 Siguiente Paso</h5>
-              <p>Ahora será redirigido automáticamente para continuar con el registro del servicio de la orden de trabajo <strong>#${workOrder}</strong>.</p>
-            </div>
-          `;
-          continueText.textContent = '🚀 Continuar con el Servicio';
-        } else {
-          nextStepsContainer.innerHTML = `
-            <div class="next-steps">
-              <h5>✨ ¡Proceso Completado!</h5>
-              <p>El vehículo ha sido registrado exitosamente en el sistema. Ya puede registrar servicios para este vehículo.</p>
-            </div>
-          `;
-          continueText.textContent = '🏠 Ir al Inicio';
-        }
-        
-        // Configurar redirección
-        let redirectUrl = 'index.html';
-        if (workOrder) {
-          redirectUrl = `index.html?plate=${encodeURIComponent(vehicleData.placa)}&workOrder=${encodeURIComponent(workOrder)}`;
-        }
-        
-        continueBtn.onclick = () => {
-          window.location.href = redirectUrl;
-        };
-        
-        // Mostrar modal
-        modal.classList.add('show');
-        
-        // Contador automático de 8 segundos
-        let countdown = 8;
-        const countdownInterval = setInterval(() => {
-          countdownText.textContent = `Redirección automática en ${countdown} segundos...`;
-          countdown--;
-          
-          if (countdown < 0) {
-            clearInterval(countdownInterval);
-            window.location.href = redirectUrl;
-          }
-        }, 1000);
-        
-        // Iniciar contador
-        countdownText.textContent = `Redirección automática en ${countdown} segundos...`;
-        
-        // Limpiar contador si el usuario hace clic
-        continueBtn.addEventListener('click', () => {
-          clearInterval(countdownInterval);
-        });
-        
-        // Cerrar con ESC (y limpiar contador)
-        const handleEscape = (event) => {
-          if (event.key === 'Escape') {
-            clearInterval(countdownInterval);
-            window.location.href = redirectUrl;
-          }
-        };
-        
-        document.addEventListener('keydown', handleEscape);
-        
-        // Limpiar event listener después de la redirección
-        setTimeout(() => {
-          document.removeEventListener('keydown', handleEscape);
-        }, 8500);
       }
 
       form.addEventListener("submit", async function (event) {
@@ -436,8 +136,22 @@
           const responseData = await response.json();
 
           if (response.ok) {
-            // Status 200 Success - Mostrar modal personalizado
-            showSuccessModal(responseData.data, workOrderFromUrl);
+            // Status 200 Success - Redirección directa sin modal
+            const vehicleData = responseData.data;
+
+            if (workOrderFromUrl) {
+              // Si hay número de orden, redirigir directamente al registro de servicio
+              const redirectUrl = `index.html?plate=${encodeURIComponent(
+                vehicleData.placa
+              )}&workOrder=${encodeURIComponent(workOrderFromUrl)}`;
+              window.location.href = redirectUrl;
+            } else {
+              // Si no hay número de orden, redirigir al registro de servicio con solo la placa
+              const redirectUrl = `index.html?plate=${encodeURIComponent(
+                vehicleData.placa
+              )}`;
+              window.location.href = redirectUrl;
+            }
           } else {
             // Handle errors (like 409 Conflict for duplicate plate)
             messageArea.textContent = `Error: ${
