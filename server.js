@@ -1,46 +1,29 @@
-console.log("--- Executing frenos-hugo/server.js ---");
-
-// Cargar variables de entorno
-require("dotenv").config();
+console.log("🚀 Iniciando Frenos Hugo v2.0");
 
 const express = require("express");
 const path = require("path");
-const { initLocalDb } = require("./src/models/localDb"); // Import SQLite DB functions
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// Middleware básico
 app.use(express.json());
 app.use(express.static("public"));
 
-// Middleware de manejo de errores
-app.use((err, req, res, next) => {
-  console.error("❌ Error no manejado:", err);
-  res.status(500).json({
-    success: false,
-    message: "Error interno del servidor",
-    error:
-      process.env.NODE_ENV === "development"
-        ? err.message
-        : "Internal Server Error",
+// Logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
+// Ruta de salud
+app.get("/health", (req, res) => {
+  res.json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    version: "2.0.0",
   });
 });
-
-// Añadir este middleware
-app.use((req, res, next) => {
-  console.log(`--> Incoming Request: ${req.method} ${req.originalUrl}`);
-  next(); // Pasa la solicitud al siguiente middleware/ruta
-});
-
-// Rutas públicas (solo para usuarios finales) - Usando SQLite
-const carsRoutes = require("./src/routes/carsRoutes_sqlite");
-const servicesRoutes = require("./src/routes/servicesRoutes_sqlite");
-const consultationRoutes = require("./src/routes/consultationRoutes_sqlite");
-
-app.use("/cars", carsRoutes);
-app.use("/services", servicesRoutes);
-app.use("/consultation", consultationRoutes);
 
 // Ruta de información
 app.get("/info", (req, res) => {
@@ -53,103 +36,174 @@ app.get("/info", (req, res) => {
   });
 });
 
-// Modify /cars/register to use Oracle DB
-app.post("/cars/register", async (req, res) => {
-  const { plate, brand, model, owner, phone } = req.body;
+// Datos en memoria (temporal)
+let servicios = [];
+let vehiculos = [];
+let nextServiceId = 1;
+let nextVehicleId = 1;
 
-  if (!plate || !brand || !model || !owner || !phone) {
-    return res
-      .status(400)
-      .send({ message: "Todos los campos son obligatorios." });
-  }
+// Rutas principales
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
-  let formattedPhone = phone.trim();
-  if (!formattedPhone.startsWith("+")) {
-    formattedPhone = "+57" + formattedPhone.replace(/\s+/g, "");
-  } else if (formattedPhone.startsWith("+57")) {
-    formattedPhone = "+57" + formattedPhone.substring(3).replace(/\s+/g, "");
-  } else {
-    formattedPhone = formattedPhone.replace(/\s+/g, "");
-  }
+app.get("/cars.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "cars.html"));
+});
 
-  const query = `INSERT INTO cars (id, plate, brand, model, owner, phone) VALUES (car_id_seq.NEXTVAL, :plate, :brand, :model, :owner, :phone)`;
-  const params = {
-    plate: plate.toUpperCase(),
-    brand: brand.toUpperCase(),
-    model: model.toUpperCase(),
-    owner: owner.toUpperCase(),
-    phone: formattedPhone,
-  };
+app.get("/consultation.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "consultation.html"));
+});
 
-  let connection;
+// API Endpoints para servicios
+app.post("/api/services", (req, res) => {
   try {
-    connection = await getConnection();
-    const result = await connection.execute(query, params, {
-      autoCommit: true,
+    const servicio = {
+      id: nextServiceId++,
+      ...req.body,
+      fecha: new Date().toISOString()
+    };
+    servicios.push(servicio);
+    
+    res.json({
+      success: true,
+      message: "Servicio registrado exitosamente",
+      id: servicio.id
     });
-
-    // For Oracle, result.lastRowid or result.rowsAffected might be useful depending on the statement
-    // For INSERT with sequence, getting the ID back might require another query or RETURNING clause if not using auto-generated keys directly
-    // For simplicity, we assume success if no error.
-
-    res.status(201).send({
-      message: "Vehículo registrado exitosamente.",
-      // id: this.lastID, // SQLite specific
-      plate: params.plate,
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error al registrar servicio"
     });
-  } catch (err) {
-    console.error("Error al registrar el vehículo:", err);
-    if (err.errorNum === 1) {
-      // ORA-00001: unique constraint violated
-      return res.status(409).send({
-        message: `La placa ${params.plate} ya está registrada.`,
-        error: "PLATE_EXISTS",
-      });
-    }
-    return res.status(500).send({
-      message: "Error interno al registrar el vehículo. Intente nuevamente.",
-      error: err.message,
-    });
-  } finally {
-    if (connection) {
-      try {
-        await connection.close();
-      } catch (closeErr) {
-        console.error("Error closing connection:", closeErr);
-      }
-    }
   }
 });
 
-// Iniciar servidor con SQLite
-async function startServer() {
-  try {
-    console.log("🔄 Inicializando SQLite...");
-    await initLocalDb();
-    console.log("✅ Base de datos SQLite inicializada correctamente");
-  } catch (err) {
-    console.error("❌ Error inicializando SQLite:", err);
-    console.log("🔄 El servidor continuará ejecutándose sin base de datos");
-  }
-
-  const server = app.listen(PORT, "0.0.0.0", () => {
-    console.log(`🚀 Servidor Frenos Hugo ejecutándose en puerto ${PORT}`);
-    console.log(`📊 Base de datos: SQLite (Aplicación pública)`);
-    console.log(`🔧 Administración: Oracle APEX`);
-    console.log(`🌐 URL: http://localhost:${PORT}`);
+app.get("/api/services", (req, res) => {
+  res.json({
+    success: true,
+    data: servicios,
+    count: servicios.length
   });
+});
 
-  // Manejo de errores del servidor
-  server.on("error", (error) => {
-    if (error.code === "EADDRINUSE") {
-      console.error(`❌ Puerto ${PORT} está en uso`);
-      process.exit(1);
-    } else {
-      console.error("❌ Error del servidor:", error);
+app.delete("/api/services/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const index = servicios.findIndex(s => s.id === id);
+  
+  if (index > -1) {
+    servicios.splice(index, 1);
+    res.json({
+      success: true,
+      message: "Servicio eliminado exitosamente"
+    });
+  } else {
+    res.status(404).json({
+      success: false,
+      message: "Servicio no encontrado"
+    });
+  }
+});
+
+// API Endpoints para vehículos
+app.post("/api/cars", (req, res) => {
+  try {
+    const vehiculo = {
+      id: nextVehicleId++,
+      ...req.body,
+      fecha: new Date().toISOString()
+    };
+    vehiculos.push(vehiculo);
+    
+    res.json({
+      success: true,
+      message: "Vehículo registrado exitosamente",
+      id: vehiculo.id
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error al registrar vehículo"
+    });
+  }
+});
+
+app.get("/api/cars", (req, res) => {
+  res.json({
+    success: true,
+    data: vehiculos,
+    count: vehiculos.length
+  });
+});
+
+app.delete("/api/cars/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const index = vehiculos.findIndex(v => v.id === id);
+  
+  if (index > -1) {
+    vehiculos.splice(index, 1);
+    res.json({
+      success: true,
+      message: "Vehículo eliminado exitosamente"
+    });
+  } else {
+    res.status(404).json({
+      success: false,
+      message: "Vehículo no encontrado"
+    });
+  }
+});
+
+// Endpoint de estadísticas
+app.get("/api/stats", (req, res) => {
+  res.json({
+    success: true,
+    stats: {
+      totalServicios: servicios.length,
+      totalVehiculos: vehiculos.length,
+      ultimoServicio: servicios.length > 0 ? servicios[servicios.length - 1] : null,
+      ultimoVehiculo: vehiculos.length > 0 ? vehiculos[vehiculos.length - 1] : null
     }
   });
-}
+});
 
-startServer();
+// Manejo de errores 404
+app.use((req, res) => {
+  res.status(404).json({
+    error: "Ruta no encontrada",
+    path: req.url,
+    message: "La funcionalidad estará disponible pronto",
+  });
+});
 
-startServer();
+// Manejo de errores
+app.use((err, req, res, next) => {
+  console.error("Error:", err);
+  res.status(500).json({
+    error: "Error interno del servidor",
+    message: "Por favor intenta más tarde",
+  });
+});
+
+// Iniciar servidor
+const server = app.listen(PORT, "0.0.0.0", () => {
+  console.log(`✅ Servidor ejecutándose en puerto ${PORT}`);
+  console.log(`🌐 URL: http://localhost:${PORT}`);
+});
+
+server.on("error", (error) => {
+  console.error("❌ Error del servidor:", error);
+  if (error.code === "EADDRINUSE") {
+    console.error(`Puerto ${PORT} está en uso`);
+  }
+});
+
+// Manejo de señales para cierre limpio
+process.on("SIGTERM", () => {
+  console.log("🔄 Cerrando servidor...");
+  server.close(() => {
+    console.log("✅ Servidor cerrado");
+    process.exit(0);
+  });
+});
+
+module.exports = app;

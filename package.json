@@ -2,12 +2,12 @@
   "name": "frenos-hugo",
   "version": "2.0.0",
   "description": "Frenos Hugo - Sistema de gestión",
-  "main": "server-simple.js",
+  "main": "server.js",
   "engines": {
     "node": "18.x"
   },
   "scripts": {
-    "start": "node server-simple.js",
+    "start": "node server.js",
     "build": "echo 'Build completed successfully'"
   },
   "dependencies": {
