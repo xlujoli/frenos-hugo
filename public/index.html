@@ -445,22 +445,25 @@
       }
 
       async function verifyWorkOrderNumber(workOrderNumber) {
-        console.log('🔍 Verificando número de orden:', workOrderNumber);
-        console.log('📊 Estado actual:', workOrderVerificationStatus);
-        
-        if (
-          !workOrderNumber ||
-          workOrderNumber === workOrderVerificationStatus.lastCheckedWorkOrder
-        ) {
-          console.log('❌ Saliendo - número vacío o ya verificado');
-          return;
+        console.log("🔍 Verificando número de orden:", workOrderNumber);
+        console.log("📊 Estado actual:", workOrderVerificationStatus);
+
+        if (!workOrderNumber) {
+          console.log("❌ Saliendo - número vacío");
+          return false;
+        }
+
+        // Si ya verificamos este número, usar el resultado previo
+        if (workOrderNumber === workOrderVerificationStatus.lastCheckedWorkOrder && workOrderVerificationStatus.verified) {
+          console.log("✅ Usando resultado previo:", workOrderVerificationStatus.isUnique);
+          return workOrderVerificationStatus.isUnique;
         }
 
         try {
           workOrderError.style.display = "none";
           workOrderVerificationStatus.lastCheckedWorkOrder = workOrderNumber;
 
-          console.log('🔗 Consultando API /api/services...');
+          console.log("🔗 Consultando API /api/services...");
           // Obtener todos los servicios para verificar duplicados
           const response = await fetch("/api/services");
           if (!response.ok) {
@@ -468,16 +471,16 @@
           }
 
           const services = await response.json();
-          console.log('📋 Servicios obtenidos:', services.length);
-          
+          console.log("📋 Servicios obtenidos:", services.length);
+
           const existingService = services.find(
             (service) => service.orden_trabajo == workOrderNumber
           );
-          
-          console.log('🔍 Servicio existente encontrado:', existingService);
+
+          console.log("🔍 Servicio existente encontrado:", existingService);
 
           if (existingService) {
-            console.log('⚠️ NÚMERO DUPLICADO DETECTADO');
+            console.log("⚠️ NÚMERO DUPLICADO DETECTADO");
             workOrderError.textContent = `⚠️ El número de orden ${workOrderNumber} ya existe`;
             workOrderError.style.display = "block";
             workOrderVerificationStatus.verified = true;
@@ -486,8 +489,10 @@
             // Hacer que el campo se vea como error
             workOrderInput.style.borderColor = "#dc3545";
             workOrderInput.style.backgroundColor = "#fff5f5";
+            
+            return false; // Número duplicado
           } else {
-            console.log('✅ Número de orden único');
+            console.log("✅ Número de orden único");
             workOrderError.style.display = "none";
             workOrderVerificationStatus.verified = true;
             workOrderVerificationStatus.isUnique = true;
@@ -495,9 +500,9 @@
             // Restaurar apariencia normal del campo
             workOrderInput.style.borderColor = "#ddd";
             workOrderInput.style.backgroundColor = "white";
+            
+            return true; // Número único
           }
-          
-          console.log('📊 Estado final:', workOrderVerificationStatus);
         } catch (error) {
           console.error("❌ Error verificando número de orden:", error);
           workOrderError.textContent = "Error al verificar número de orden";
@@ -508,6 +513,8 @@
           // Hacer que el campo se vea como error
           workOrderInput.style.borderColor = "#dc3545";
           workOrderInput.style.backgroundColor = "#fff5f5";
+          
+          return false; // Error = no permitir continuar
         }
       }
 
@@ -600,18 +607,18 @@
       });
 
       // Event listeners para verificación automática de número de orden
-      workOrderInput.addEventListener("blur", function () {
+      workOrderInput.addEventListener("blur", async function () {
         const workOrder = this.value.trim();
         if (workOrder) {
-          verifyWorkOrderNumber(workOrder);
+          await verifyWorkOrderNumber(workOrder);
         }
       });
 
       workOrderInput.addEventListener("keydown", async function (event) {
-        console.log('⌨️ Keydown evento:', event.key);
+        console.log("⌨️ Keydown evento:", event.key);
         if (event.key === "Tab" || event.key === "Enter") {
           const workOrder = this.value.trim();
-          console.log('🎯 Verificando en keydown:', workOrder);
+          console.log("🎯 Verificando en keydown:", workOrder);
           if (workOrder) {
             // Verificar inmediatamente al presionar Tab o Enter
             await verifyWorkOrderNumber(workOrder);
@@ -621,7 +628,7 @@
               workOrderVerificationStatus.verified &&
               !workOrderVerificationStatus.isUnique
             ) {
-              console.log('🚫 BLOQUEANDO navegación - número duplicado');
+              console.log("🚫 BLOQUEANDO navegación - número duplicado");
               event.preventDefault(); // Evitar que se mueva al siguiente campo
               this.focus(); // Mantener el foco en este campo
               alert(
@@ -629,16 +636,15 @@
               );
               return false;
             } else {
-              console.log('✅ Permitiendo navegación - número único');
+              console.log("✅ Permitiendo navegación - número único");
             }
           }
         }
       });
 
-      // Bloquear envío de formulario si hay número duplicado
+      // Verificación automática mejorada del número de orden
       let workOrderTimeout;
       workOrderInput.addEventListener("input", function () {
-        // Limpiar estado anterior cuando el usuario está escribiendo
         const currentWorkOrder = this.value.trim();
 
         // Limpiar timeout anterior
@@ -646,9 +652,8 @@
           clearTimeout(workOrderTimeout);
         }
 
-        if (
-          currentWorkOrder !== workOrderVerificationStatus.lastCheckedWorkOrder
-        ) {
+        // Resetear estado si el número cambió
+        if (currentWorkOrder !== workOrderVerificationStatus.lastCheckedWorkOrder) {
           workOrderError.style.display = "none";
           workOrderVerificationStatus.verified = false;
           workOrderVerificationStatus.isUnique = true;
@@ -658,11 +663,11 @@
           workOrderInput.style.backgroundColor = "white";
         }
 
-        // Verificar automáticamente después de 800ms de inactividad
+        // Verificar automáticamente después de 500ms de inactividad (más rápido)
         if (currentWorkOrder && currentWorkOrder.length > 0) {
-          workOrderTimeout = setTimeout(() => {
-            verifyWorkOrderNumber(currentWorkOrder);
-          }, 800);
+          workOrderTimeout = setTimeout(async () => {
+            await verifyWorkOrderNumber(currentWorkOrder);
+          }, 500);
         }
       });
 
@@ -778,29 +783,47 @@
           }
 
           // --- Verificar número de orden duplicado ---
+          console.log("🔍 FORMULARIO: Verificando número de orden antes de envío");
+          console.log("📊 Estado actual antes de verificar:", workOrderVerificationStatus);
+          
           if (
             !workOrderVerificationStatus.verified ||
             workOrderVerificationStatus.lastCheckedWorkOrder !== workOrderValue
           ) {
+            console.log("🔄 Ejecutando nueva verificación...");
             // Si no se ha verificado o el número cambió, verificar ahora
-            await verifyWorkOrderNumber(workOrderValue);
+            const isUnique = await verifyWorkOrderNumber(workOrderValue);
+            console.log("✅ Resultado de verificación:", isUnique);
 
             // Esperar un momento para que se complete la verificación
-            await new Promise((resolve) => setTimeout(resolve, 500));
+            await new Promise((resolve) => setTimeout(resolve, 100));
           }
+
+          console.log("📊 Estado final después de verificar:", workOrderVerificationStatus);
 
           // BLOQUEAR ENVÍO si el número de orden ya existe
           if (
             workOrderVerificationStatus.verified &&
             !workOrderVerificationStatus.isUnique
           ) {
+            console.log("🚫 BLOQUEANDO ENVÍO - número duplicado detectado");
             // Mostrar el error y enfocar el campo
             workOrderError.textContent = `⚠️ El número de orden ${workOrderValue} ya existe. No se puede continuar.`;
             workOrderError.style.display = "block";
+            workOrderInput.style.borderColor = "#dc3545";
+            workOrderInput.style.backgroundColor = "#fff5f5";
             workOrderInput.focus();
             workOrderInput.select(); // Seleccionar el texto para fácil corrección
+            
+            // Mostrar también un mensaje prominente
+            messageArea.textContent = `❌ ERROR: El número de orden ${workOrderValue} ya existe en el sistema.`;
+            messageArea.style.color = "red";
+            messageArea.style.fontWeight = "bold";
+            
             return; // DETENER completamente el proceso
           }
+
+          console.log("✅ Número de orden válido, continuando con envío...");
 
           // --- Verificar placa usando la verificación previa ---
           if (
