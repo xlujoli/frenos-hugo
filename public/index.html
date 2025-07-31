@@ -58,7 +58,7 @@
         display: block;
         color: #495057;
       }
-      
+
       #plate-status {
         min-height: 24px;
         padding: 6px 10px;
@@ -69,9 +69,134 @@
         background: #f8f9fa;
         border: 1px solid transparent;
       }
-      
+
       #plate-status:empty {
         display: none;
+      }
+      
+      /* Modal personalizado para vehículo no registrado */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+      
+      .modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+      }
+      
+      .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        transform: translateY(-20px);
+        transition: transform 0.3s ease;
+      }
+      
+      .modal-overlay.show .modal-content {
+        transform: translateY(0);
+      }
+      
+      .modal-header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      
+      .modal-icon {
+        font-size: 48px;
+        margin-bottom: 15px;
+        display: block;
+      }
+      
+      .modal-title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #dc3545;
+        margin-bottom: 10px;
+      }
+      
+      .modal-subtitle {
+        font-size: 16px;
+        color: #6c757d;
+        margin-bottom: 20px;
+      }
+      
+      .modal-body {
+        margin-bottom: 25px;
+      }
+      
+      .plate-highlight {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        color: #856404;
+        margin: 15px 0;
+      }
+      
+      .modal-message {
+        font-size: 16px;
+        line-height: 1.6;
+        color: #495057;
+        text-align: center;
+      }
+      
+      .modal-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      
+      .modal-btn {
+        padding: 12px 25px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 140px;
+      }
+      
+      .modal-btn-primary {
+        background: #007bff;
+        color: white;
+      }
+      
+      .modal-btn-primary:hover {
+        background: #0056b3;
+        transform: translateY(-1px);
+      }
+      
+      .modal-btn-secondary {
+        background: #6c757d;
+        color: white;
+      }
+      
+      .modal-btn-secondary:hover {
+        background: #545b62;
+        transform: translateY(-1px);
       }
     </style>
   </head>
@@ -100,9 +225,17 @@
           style="text-transform: uppercase"
           required
         />
-        
+
         <!-- Estado de verificación de placa -->
-        <div id="plate-status" style="margin-top: 8px; min-height: 24px; font-size: 14px; font-weight: 500;">
+        <div
+          id="plate-status"
+          style="
+            margin-top: 8px;
+            min-height: 24px;
+            font-size: 14px;
+            font-weight: 500;
+          "
+        >
           <!-- Aquí se mostrará el estado de verificación -->
         </div>
 
@@ -123,6 +256,38 @@
         <button type="submit">Registrar Servicio</button>
       </form>
       <div id="message-area" style="margin-top: 15px; text-align: center"></div>
+      
+      <!-- Modal para vehículo no registrado -->
+      <div id="vehicle-not-found-modal" class="modal-overlay">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span class="modal-icon">🚗❌</span>
+            <h3 class="modal-title">Vehículo No Registrado</h3>
+            <p class="modal-subtitle">Se requiere registro del vehículo</p>
+          </div>
+          
+          <div class="modal-body">
+            <div class="plate-highlight" id="modal-plate-display">
+              <!-- La placa se mostrará aquí -->
+            </div>
+            
+            <div class="modal-message">
+              <p><strong>Esta placa no se encuentra registrada en el sistema.</strong></p>
+              <p>Para continuar con el registro del servicio, primero debe registrar el vehículo en nuestro sistema.</p>
+              <p>¿Qué desea hacer?</p>
+            </div>
+          </div>
+          
+          <div class="modal-actions">
+            <button class="modal-btn modal-btn-primary" id="register-vehicle-btn">
+              📝 Registrar Vehículo
+            </button>
+            <button class="modal-btn modal-btn-secondary" id="cancel-service-btn">
+              ↩️ Corregir Placa
+            </button>
+          </div>
+        </div>
+      </div>
     </main>
     <footer>
       <p>&copy; 2025 Frenos Hugo. Todos los derechos reservados.</p>
@@ -144,7 +309,7 @@
         verified: false,
         exists: false,
         vehicleData: null,
-        lastCheckedPlate: ""
+        lastCheckedPlate: "",
       };
 
       if (plateFromUrl) {
@@ -156,6 +321,66 @@
         workOrderInput.value = workOrderFromUrl;
       }
 
+      // --- Funciones del modal personalizado ---
+      function showVehicleNotFoundModal(plate, workOrder) {
+        const modal = document.getElementById('vehicle-not-found-modal');
+        const plateDisplay = document.getElementById('modal-plate-display');
+        const registerBtn = document.getElementById('register-vehicle-btn');
+        const cancelBtn = document.getElementById('cancel-service-btn');
+        
+        plateDisplay.textContent = plate;
+        
+        // Configurar eventos de botones
+        registerBtn.onclick = () => {
+          hideVehicleNotFoundModal();
+          redirectToCreateVehicle(plate);
+        };
+        
+        cancelBtn.onclick = () => {
+          hideVehicleNotFoundModal();
+          messageArea.textContent = "❌ Registro cancelado. Verifique la placa o registre el vehículo primero.";
+          messageArea.style.color = "orange";
+          plateInput.focus();
+          plateInput.select();
+        };
+        
+        // Mostrar modal
+        modal.classList.add('show');
+        
+        // Cerrar con ESC
+        document.addEventListener('keydown', handleModalEscape);
+        
+        // Cerrar al hacer click fuera del modal
+        modal.addEventListener('click', handleModalOutsideClick);
+      }
+      
+      function hideVehicleNotFoundModal() {
+        const modal = document.getElementById('vehicle-not-found-modal');
+        modal.classList.remove('show');
+        
+        // Remover event listeners
+        document.removeEventListener('keydown', handleModalEscape);
+        modal.removeEventListener('click', handleModalOutsideClick);
+      }
+      
+      function handleModalEscape(event) {
+        if (event.key === 'Escape') {
+          hideVehicleNotFoundModal();
+          messageArea.textContent = "❌ Registro cancelado. Verifique la placa o registre el vehículo primero.";
+          messageArea.style.color = "orange";
+          plateInput.focus();
+        }
+      }
+      
+      function handleModalOutsideClick(event) {
+        if (event.target === event.currentTarget) {
+          hideVehicleNotFoundModal();
+          messageArea.textContent = "❌ Registro cancelado. Verifique la placa o registre el vehículo primero.";
+          messageArea.style.color = "orange";
+          plateInput.focus();
+        }
+      }
+
       // --- Funciones de verificación de placa ---
       async function verifyPlateAutomatically(plate) {
         if (!plate || plate.length < 3) {
@@ -165,26 +390,31 @@
         }
 
         const cleanPlate = plate.toUpperCase().trim();
-        
+
         // No verificar si ya se verificó la misma placa
-        if (plateVerificationStatus.lastCheckedPlate === cleanPlate && plateVerificationStatus.verified) {
+        if (
+          plateVerificationStatus.lastCheckedPlate === cleanPlate &&
+          plateVerificationStatus.verified
+        ) {
           return;
         }
 
         try {
           plateStatus.innerHTML = `<span style="color: #007bff;">🔍 Verificando placa ${cleanPlate}...</span>`;
-          
-          const response = await fetch(`/api/cars/verify/${encodeURIComponent(cleanPlate)}`);
+
+          const response = await fetch(
+            `/api/cars/verify/${encodeURIComponent(cleanPlate)}`
+          );
           const data = await response.json();
 
           if (response.ok && data.success) {
             plateVerificationStatus.verified = true;
             plateVerificationStatus.lastCheckedPlate = cleanPlate;
-            
+
             if (data.exists) {
               plateVerificationStatus.exists = true;
               plateVerificationStatus.vehicleData = data.data;
-              
+
               plateStatus.innerHTML = `
                 <span style="color: #28a745;">
                   ✅ ${data.data.marca} ${data.data.modelo} - ${data.data.propietario}
@@ -193,7 +423,7 @@
             } else {
               plateVerificationStatus.exists = false;
               plateVerificationStatus.vehicleData = null;
-              
+
               plateStatus.innerHTML = `
                 <span style="color: #dc3545;">
                   ❌ Placa no registrada - 
@@ -224,15 +454,15 @@
       }
 
       // Event listeners para verificación automática de placa
-      plateInput.addEventListener('blur', function() {
+      plateInput.addEventListener("blur", function () {
         const plate = this.value.trim();
         if (plate) {
           verifyPlateAutomatically(plate);
         }
       });
 
-      plateInput.addEventListener('keydown', function(event) {
-        if (event.key === 'Tab' || event.key === 'Enter') {
+      plateInput.addEventListener("keydown", function (event) {
+        if (event.key === "Tab" || event.key === "Enter") {
           const plate = this.value.trim();
           if (plate) {
             setTimeout(() => verifyPlateAutomatically(plate), 100);
@@ -241,7 +471,7 @@
       });
 
       // Limpiar estado cuando el usuario está escribiendo
-      plateInput.addEventListener('input', function() {
+      plateInput.addEventListener("input", function () {
         const currentPlate = this.value.trim().toUpperCase();
         if (currentPlate !== plateVerificationStatus.lastCheckedPlate) {
           plateStatus.innerHTML = "";
@@ -355,45 +585,32 @@
           }
 
           // --- Verificar placa usando la verificación previa ---
-          if (!plateVerificationStatus.verified || plateVerificationStatus.lastCheckedPlate !== plate) {
+          if (
+            !plateVerificationStatus.verified ||
+            plateVerificationStatus.lastCheckedPlate !== plate
+          ) {
             // Si no se ha verificado o la placa cambió, verificar ahora
             messageArea.textContent = "Verificando vehículo...";
             messageArea.style.color = "blue";
-            
+
             await verifyPlateAutomatically(plate);
-            
+
             // Esperar un momento para que se complete la verificación
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise((resolve) => setTimeout(resolve, 500));
           }
 
           // Verificar el estado actual de la placa
           if (!plateVerificationStatus.verified) {
-            messageArea.textContent = "Error al verificar el vehículo. Intente nuevamente.";
+            messageArea.textContent =
+              "Error al verificar el vehículo. Intente nuevamente.";
             messageArea.style.color = "red";
             return;
           }
 
           if (!plateVerificationStatus.exists) {
-            const confirmCreate = confirm(
-              `❌ VEHÍCULO NO REGISTRADO\\n\\n` +
-                `La placa "${plate}" no se encuentra en el sistema.\\n\\n` +
-                `Para continuar con el registro del servicio, primero debe registrar el vehículo.\\n\\n` +
-                `¿Desea registrar este vehículo ahora?\\n\\n` +
-                `• Presione 'Aceptar' para ir al formulario de registro de vehículos\\n` +
-                `• Presione 'Cancelar' para corregir la placa`
-            );
-
-            if (confirmCreate) {
-              // Redirigir al formulario de crear vehículo con la placa y orden de trabajo
-              window.location.href = `cars.html?plate=${encodeURIComponent(plate)}&workOrder=${encodeURIComponent(workOrderValue)}`;
-              return;
-            } else {
-              messageArea.textContent = "❌ Registro cancelado. Verifique la placa o registre el vehículo primero.";
-              messageArea.style.color = "orange";
-              plateInput.focus();
-              plateInput.select();
-              return;
-            }
+            // Mostrar modal personalizado en lugar de confirm()
+            showVehicleNotFoundModal(plate, workOrderValue);
+            return;
           }
 
           // Si llegamos aquí, la placa existe y está verificada
