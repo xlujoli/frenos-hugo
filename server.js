@@ -248,6 +248,36 @@ app.delete("/api/cars/:id", async (req, res) => {
   }
 });
 
+// Endpoint para verificar si una placa existe
+app.get("/api/cars/verify/:plate", async (req, res) => {
+  try {
+    const plate = req.params.plate.toUpperCase();
+    const vehiculos = await db.getVehicles({ placa: plate });
+    
+    if (vehiculos && vehiculos.length > 0) {
+      res.json({
+        success: true,
+        exists: true,
+        message: "Vehículo encontrado",
+        data: vehiculos[0],
+      });
+    } else {
+      res.json({
+        success: true,
+        exists: false,
+        message: "Vehículo no encontrado",
+      });
+    }
+  } catch (error) {
+    console.error("Error verificando placa:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error al verificar placa",
+      error: error.message,
+    });
+  }
+});
+
 // Endpoint de estadísticas
 app.get("/api/stats", async (req, res) => {
   try {

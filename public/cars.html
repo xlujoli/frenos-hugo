@@ -16,10 +16,17 @@
         </ul>
       </nav>
     </header>
-    <main>
+        <main>
       <!-- Changed action/method, will be handled by JS -->
       <form class="card" id="car-registration-form">
         <h3>Información del Vehículo</h3>
+        
+        <!-- Mensaje informativo si viene desde el formulario de servicios -->
+        <div id="info-message" style="display: none; background: #e3f2fd; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #2196f3;">
+          <strong>📋 Registro requerido:</strong><br>
+          Debe completar el registro del vehículo para continuar con el servicio.
+        </div>
+
         <label for="plate">Placa:</label>
         <input
           type="text"
@@ -75,9 +82,19 @@
       const urlParams = new URLSearchParams(window.location.search);
       const plateFromUrl = urlParams.get("plate");
       const workOrderFromUrl = urlParams.get("workOrder"); // Get workOrder
+      const infoMessage = document.getElementById("info-message");
 
       if (plateFromUrl) {
         document.getElementById("plate").value = plateFromUrl;
+        
+        // Mostrar mensaje informativo si viene desde el formulario de servicios
+        if (workOrderFromUrl) {
+          infoMessage.style.display = "block";
+          infoMessage.innerHTML = `
+            <strong>📋 Registro requerido:</strong><br>
+            La placa <strong>${plateFromUrl}</strong> no está registrada. Complete este formulario para continuar con el servicio de la orden de trabajo <strong>#${workOrderFromUrl}</strong>.
+          `;
+        }
       }
 
       form.addEventListener("submit", async function (event) {
@@ -109,7 +126,11 @@
 
           if (response.ok) {
             // Status 200 Success
-            alert(responseData.message); // Show success message
+            let successMessage = responseData.message;
+            if (workOrderFromUrl) {
+              successMessage += `\\n\\nAhora será redirigido para continuar con el registro del servicio.`;
+            }
+            alert(successMessage);
 
             // Redirect to index.html including plate and workOrder (if it exists)
             let redirectUrl = `index.html?plate=${encodeURIComponent(
