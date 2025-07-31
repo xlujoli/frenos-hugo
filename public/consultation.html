@@ -85,14 +85,14 @@
           return;
         }
 
-        let fetchUrl = "/consultation/consult-service?";
+        let fetchUrl = "/api/services?";
         if (selectedType === "plate") {
           // Convert to uppercase *before* encoding and sending
           searchValue = searchValue.toUpperCase();
-          fetchUrl += `plate=${encodeURIComponent(searchValue)}`;
+          fetchUrl += `placa=${encodeURIComponent(searchValue)}`;
         } else {
-          // workOrder
-          fetchUrl += `workOrder=${encodeURIComponent(searchValue)}`;
+          // workOrder - buscar por orden de trabajo
+          fetchUrl += `orden_trabajo=${encodeURIComponent(searchValue)}`;
         }
 
         console.log(
@@ -117,7 +117,11 @@
             return;
           }
 
-          const services = await response.json();
+          const responseData = await response.json();
+          console.log("Respuesta del servidor:", responseData);
+          
+          // Extraer el array de servicios de la respuesta
+          const services = responseData.data || responseData;
 
           // No need to sort here if backend already sorts by date DESC
           // services.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -125,7 +129,7 @@
           const resultsContainer = document.getElementById("results");
           resultsContainer.innerHTML = "<h3>Resultados:</h3>"; // Clear previous results and add title
 
-          if (services.length === 0) {
+          if (!services || services.length === 0) {
             resultsContainer.innerHTML +=
               "<p>No se encontraron servicios para el criterio de búsqueda.</p>";
             return;
@@ -136,10 +140,10 @@
             const card = document.createElement("div");
             card.classList.add("service-card-result"); // Use a specific class for result cards
 
-            // Format date
+            // Format date - usar fecha_creacion del servidor
             let formattedDate = "N/A";
-            if (service.date) {
-              const dateObj = new Date(service.date);
+            if (service.fecha_creacion) {
+              const dateObj = new Date(service.fecha_creacion);
               const weekday = dateObj.toLocaleDateString("es-ES", {
                 weekday: "long",
               });
@@ -153,27 +157,22 @@
             const formattedCost = new Intl.NumberFormat("es-CO", {
               style: "currency",
               currency: "COP",
-            }).format(service.cost || 0);
+            }).format(service.costo || 0);
 
             card.innerHTML = `
               <h4>Servicio #${
-                service.workOrder || "N/A"
+                service.orden_trabajo || "N/A"
               } - ${formattedDate}</h4>
               <div class="card-section">
                 <h5>Vehículo</h5>
-                <p><strong>Placa:</strong> ${service.plate}</p>
-                <p><strong>Marca:</strong> ${service.brand || "N/A"}</p>
-                <p><strong>Modelo:</strong> ${service.model || "N/A"}</p>
-              </div>
-              <div class="card-section">
-                <h5>Propietario</h5>
-                <p><strong>Nombre:</strong> ${service.owner || "N/A"}</p>
-                <p><strong>Teléfono:</strong> ${service.phone || "N/A"}</p>
+                <p><strong>Placa:</strong> ${service.placa}</p>
+                <p><strong>Tipo de Servicio:</strong> ${service.tipo_servicio || "N/A"}</p>
+                <p><strong>Estado:</strong> ${service.estado || "N/A"}</p>
               </div>
               <div class="card-section">
                 <h5>Detalles del Servicio</h5>
-                <p><strong>Trabajo Realizado:</strong></p>
-                <pre class="work-details">${service.work || "N/A"}</pre> 
+                <p><strong>Descripción:</strong></p>
+                <pre class="work-details">${service.descripcion || "N/A"}</pre> 
                 <p><strong>Total:</strong> ${formattedCost}</p>
               </div>
             `;

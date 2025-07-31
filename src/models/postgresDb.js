@@ -169,6 +169,12 @@ class PostgresDatabase {
       params.push(`%${filters.placa}%`);
     }
 
+    if (filters.orden_trabajo) {
+      paramCount++;
+      query += ` AND orden_trabajo = $${paramCount}`;
+      params.push(filters.orden_trabajo);
+    }
+
     if (filters.estado) {
       paramCount++;
       query += ` AND estado = $${paramCount}`;

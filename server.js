@@ -91,6 +91,7 @@ app.get("/api/services", async (req, res) => {
   try {
     const filters = {
       placa: req.query.placa,
+      orden_trabajo: req.query.orden_trabajo ? parseInt(req.query.orden_trabajo) : undefined,
       estado: req.query.estado,
       fecha_desde: req.query.fecha_desde,
       limit: req.query.limit ? parseInt(req.query.limit) : undefined,
