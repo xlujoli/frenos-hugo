@@ -73,7 +73,7 @@
       #plate-status:empty {
         display: none;
       }
-      
+
       /* Modal personalizado para vehículo no registrado */
       .modal-overlay {
         position: fixed;
@@ -90,12 +90,12 @@
         visibility: hidden;
         transition: all 0.3s ease;
       }
-      
+
       .modal-overlay.show {
         opacity: 1;
         visibility: visible;
       }
-      
+
       .modal-content {
         background: white;
         padding: 30px;
@@ -108,66 +108,66 @@
         transform: translateY(-20px);
         transition: transform 0.3s ease;
       }
-      
+
       .modal-overlay.show .modal-content {
         transform: translateY(0);
       }
-      
+
       .modal-header {
         text-align: center;
         margin-bottom: 20px;
       }
-      
+
       .modal-icon {
         font-size: 48px;
         margin-bottom: 15px;
         display: block;
       }
-      
+
       .modal-title {
         font-size: 24px;
         font-weight: bold;
         color: #dc3545;
         margin-bottom: 10px;
       }
-      
+
       .modal-subtitle {
         font-size: 16px;
         color: #6c757d;
         margin-bottom: 20px;
       }
-      
+
       .modal-body {
         margin-bottom: 25px;
       }
-      
+
       .plate-highlight {
         background: #fff3cd;
         border: 2px solid #ffc107;
         padding: 10px 15px;
         border-radius: 8px;
-        font-family: 'Courier New', monospace;
+        font-family: "Courier New", monospace;
         font-size: 18px;
         font-weight: bold;
         text-align: center;
         color: #856404;
         margin: 15px 0;
       }
-      
+
       .modal-message {
         font-size: 16px;
         line-height: 1.6;
         color: #495057;
         text-align: center;
       }
-      
+
       .modal-actions {
         display: flex;
         gap: 15px;
         justify-content: center;
         flex-wrap: wrap;
       }
-      
+
       .modal-btn {
         padding: 12px 25px;
         border: none;
@@ -178,22 +178,22 @@
         transition: all 0.2s ease;
         min-width: 140px;
       }
-      
+
       .modal-btn-primary {
         background: #007bff;
         color: white;
       }
-      
+
       .modal-btn-primary:hover {
         background: #0056b3;
         transform: translateY(-1px);
       }
-      
+
       .modal-btn-secondary {
         background: #6c757d;
         color: white;
       }
-      
+
       .modal-btn-secondary:hover {
         background: #545b62;
         transform: translateY(-1px);
@@ -256,7 +256,7 @@
         <button type="submit">Registrar Servicio</button>
       </form>
       <div id="message-area" style="margin-top: 15px; text-align: center"></div>
-      
+
       <!-- Modal para vehículo no registrado -->
       <div id="vehicle-not-found-modal" class="modal-overlay">
         <div class="modal-content">
@@ -265,24 +265,37 @@
             <h3 class="modal-title">Vehículo No Registrado</h3>
             <p class="modal-subtitle">Se requiere registro del vehículo</p>
           </div>
-          
+
           <div class="modal-body">
             <div class="plate-highlight" id="modal-plate-display">
               <!-- La placa se mostrará aquí -->
             </div>
-            
+
             <div class="modal-message">
-              <p><strong>Esta placa no se encuentra registrada en el sistema.</strong></p>
-              <p>Para continuar con el registro del servicio, primero debe registrar el vehículo en nuestro sistema.</p>
+              <p>
+                <strong
+                  >Esta placa no se encuentra registrada en el sistema.</strong
+                >
+              </p>
+              <p>
+                Para continuar con el registro del servicio, primero debe
+                registrar el vehículo en nuestro sistema.
+              </p>
               <p>¿Qué desea hacer?</p>
             </div>
           </div>
-          
+
           <div class="modal-actions">
-            <button class="modal-btn modal-btn-primary" id="register-vehicle-btn">
+            <button
+              class="modal-btn modal-btn-primary"
+              id="register-vehicle-btn"
+            >
               📝 Registrar Vehículo
             </button>
-            <button class="modal-btn modal-btn-secondary" id="cancel-service-btn">
+            <button
+              class="modal-btn modal-btn-secondary"
+              id="cancel-service-btn"
+            >
               ↩️ Corregir Placa
             </button>
           </div>
@@ -323,59 +336,62 @@
 
       // --- Funciones del modal personalizado ---
       function showVehicleNotFoundModal(plate, workOrder) {
-        const modal = document.getElementById('vehicle-not-found-modal');
-        const plateDisplay = document.getElementById('modal-plate-display');
-        const registerBtn = document.getElementById('register-vehicle-btn');
-        const cancelBtn = document.getElementById('cancel-service-btn');
-        
+        const modal = document.getElementById("vehicle-not-found-modal");
+        const plateDisplay = document.getElementById("modal-plate-display");
+        const registerBtn = document.getElementById("register-vehicle-btn");
+        const cancelBtn = document.getElementById("cancel-service-btn");
+
         plateDisplay.textContent = plate;
-        
+
         // Configurar eventos de botones
         registerBtn.onclick = () => {
           hideVehicleNotFoundModal();
           redirectToCreateVehicle(plate);
         };
-        
+
         cancelBtn.onclick = () => {
           hideVehicleNotFoundModal();
-          messageArea.textContent = "❌ Registro cancelado. Verifique la placa o registre el vehículo primero.";
+          messageArea.textContent =
+            "❌ Registro cancelado. Verifique la placa o registre el vehículo primero.";
           messageArea.style.color = "orange";
           plateInput.focus();
           plateInput.select();
         };
-        
+
         // Mostrar modal
-        modal.classList.add('show');
-        
+        modal.classList.add("show");
+
         // Cerrar con ESC
-        document.addEventListener('keydown', handleModalEscape);
-        
+        document.addEventListener("keydown", handleModalEscape);
+
         // Cerrar al hacer click fuera del modal
-        modal.addEventListener('click', handleModalOutsideClick);
+        modal.addEventListener("click", handleModalOutsideClick);
       }
-      
+
       function hideVehicleNotFoundModal() {
-        const modal = document.getElementById('vehicle-not-found-modal');
-        modal.classList.remove('show');
-        
+        const modal = document.getElementById("vehicle-not-found-modal");
+        modal.classList.remove("show");
+
         // Remover event listeners
-        document.removeEventListener('keydown', handleModalEscape);
-        modal.removeEventListener('click', handleModalOutsideClick);
+        document.removeEventListener("keydown", handleModalEscape);
+        modal.removeEventListener("click", handleModalOutsideClick);
       }
-      
+
       function handleModalEscape(event) {
-        if (event.key === 'Escape') {
+        if (event.key === "Escape") {
           hideVehicleNotFoundModal();
-          messageArea.textContent = "❌ Registro cancelado. Verifique la placa o registre el vehículo primero.";
+          messageArea.textContent =
+            "❌ Registro cancelado. Verifique la placa o registre el vehículo primero.";
           messageArea.style.color = "orange";
           plateInput.focus();
         }
       }
-      
+
       function handleModalOutsideClick(event) {
         if (event.target === event.currentTarget) {
           hideVehicleNotFoundModal();
-          messageArea.textContent = "❌ Registro cancelado. Verifique la placa o registre el vehículo primero.";
+          messageArea.textContent =
+            "❌ Registro cancelado. Verifique la placa o registre el vehículo primero.";
           messageArea.style.color = "orange";
           plateInput.focus();
         }
