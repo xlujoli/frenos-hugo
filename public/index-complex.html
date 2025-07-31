@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registrar Servicios - Frenos Hugo</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Registrar Servicio</h1>
+      <nav>
+        <ul>
+          <li><a href="cars.html">Vehículos</a></li>
+          <li><a href="consultation.html">Consulta</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <form class="card" id="serviceForm">
+        <h3>Información del Servicio</h3>
+
+        <label for="workOrder">Orden de Trabajo:</label>
+        <input type="number" id="workOrder" name="workOrder" required />
+
+        <label for="plate">Placa:</label>
+        <input
+          type="text"
+          id="plate"
+          name="plate"
+          style="text-transform: uppercase"
+          required
+        />
+
+        <!-- Invoice Section -->
+        <div id="invoice-items-container">
+          <label>Detalles del Servicio:</label>
+          <!-- Invoice rows will be added here -->
+        </div>
+        <button type="button" id="add-invoice-item-btn">
+          + Añadir Detalle
+        </button>
+
+        <div id="invoice-total-container">
+          <strong>Total Calculado:</strong>
+          <span id="invoice-total">$0.00</span>
+        </div>
+        <!-- End Invoice Section -->
+
+        <!-- Removed old work and cost fields -->
+        <!-- 
+        <label for="work">Trabajo Realizado:</label>
+        <textarea id="work" name="work" rows="4" style="text-transform: uppercase" required></textarea>
+        <label for="cost">Total:</label>
+        <input type="number" id="cost" name="cost" required />
+        -->
+
+        <button type="submit">Registrar Servicio</button>
+      </form>
+    </main>
+    <footer>
+      <p>&copy; 2025 Frenos Hugo. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+      // Pre-fill plate and workOrder from URL if present
+      const urlParams = new URLSearchParams(window.location.search);
+      const plateFromUrl = urlParams.get("plate");
+      const workOrderFromUrl = urlParams.get("workOrder"); // Get workOrder from URL
+
+      const plateInput = document.getElementById("plate");
+      const workOrderInput = document.getElementById("workOrder");
+
+      if (plateFromUrl) {
+        plateInput.value = plateFromUrl;
+      }
+      if (workOrderFromUrl) {
+        // Pre-fill workOrder input
+        workOrderInput.value = workOrderFromUrl;
+      }
+
+      let plateCheckInProgress = false; // Flag to prevent multiple checks at once
+      let workOrderCheckInProgress = false; // Flag for work order check
+
+      // --- Reusable Plate Check Function ---
+      async function checkPlateExistence() {
+        const plate = plateInput.value.toUpperCase();
+        // Clear previous custom validity messages immediately
+        plateInput.setCustomValidity("");
+
+        // Define a minimum length to trigger the check (e.g., 6 characters)
+        const minLengthForCheck = 6; // Or adjust as needed
+
+        if (plate.length < minLengthForCheck) {
+          // Don't check if too short, but ensure no lingering error message
+          plateInput.setCustomValidity("");
+          // Optionally report validity if you want browser default messages for length
+          // plateInput.reportValidity();
+          return; // Exit if too short
+        }
+
+        if (plateCheckInProgress) {
+          console.log("Plate check already in progress.");
+          return; // Prevent concurrent checks
+        }
+
+        plateCheckInProgress = true; // Set flag
+
+        try {
+          const response = await fetch(`/cars/check/${plate}`);
+          if (!response.ok) {
+            console.warn(
+              `Error del servidor al verificar placa: ${response.status}`
+            );
+            // Informational message, doesn't block typing
+            plateInput.setCustomValidity("Error al verificar placa.");
+          } else {
+            const data = await response.json();
+
+            if (!data.exists) {
+              // Plate does not exist, ask the user immediately
+              const createVehicle = confirm(
+                // Use confirm() for a Yes/No dialog
+                `La placa ${plate} no está registrada. ¿Desea crear el vehículo ahora?`
+              );
+
+              if (createVehicle) {
+                // User clicked OK/Yes, redirect immediately
+                // Include workOrder in the redirect URL
+                const currentWorkOrder = workOrderInput.value.trim();
+                let redirectUrl = `cars.html?plate=${encodeURIComponent(
+                  plate
+                )}`;
+                if (currentWorkOrder) {
+                  redirectUrl += `&workOrder=${encodeURIComponent(
+                    currentWorkOrder
+                  )}`;
+                }
+                window.location.href = redirectUrl;
+                return;
+              } else {
+                // User clicked Cancel/No
+                plateInput.setCustomValidity(
+                  "Placa no registrada. No se puede registrar servicio sin vehículo existente."
+                );
+                // Optionally clear the input or keep the message
+                // plateInput.value = "";
+              }
+            } else {
+              // Plate exists, clear any message
+              plateInput.setCustomValidity("");
+            }
+          }
+        } catch (error) {
+          console.error("Error al verificar la placa:", error);
+          plateInput.setCustomValidity("Error de red al verificar placa.");
+        } finally {
+          plateCheckInProgress = false; // Reset flag
+          // Report validity to show any custom message set above or clear errors
+          // Only report if the element still has focus or if triggered by blur/enter
+          // This prevents annoying popups while typing if the check fails mid-word
+          // We might refine this reporting logic based on user experience.
+          // For now, let's report it to ensure messages are shown.
+          plateInput.reportValidity();
+        }
+      }
+
+      // --- Reusable Work Order Check Function ---
+      async function checkWorkOrderExistence() {
+        const workOrderValue = workOrderInput.value.trim();
+        // Clear previous custom validity messages immediately
+        workOrderInput.setCustomValidity("");
+
+        if (!workOrderValue) {
+          // Don't check if empty, let the 'required' attribute handle it
+          return;
+        }
+
+        // Basic check if it's a number
+        if (isNaN(parseInt(workOrderValue))) {
+          workOrderInput.setCustomValidity(
+            "La orden de trabajo debe ser un número."
+          );
+          workOrderInput.reportValidity();
+          return;
+        }
+
+        if (workOrderCheckInProgress) {
+          console.log("Work order check already in progress.");
+          return; // Prevent concurrent checks
+        }
+
+        workOrderCheckInProgress = true; // Set flag
+
+        try {
+          // Use the new backend route
+          const response = await fetch(
+            `/services/check-workorder/${workOrderValue}`
+          );
+          if (!response.ok) {
+            console.warn(
+              `Error del servidor al verificar orden de trabajo: ${response.status}`
+            );
+            let checkErrorMessage = "Error al verificar orden.";
+            try {
+              const errorData = await response.json();
+              checkErrorMessage = errorData.message || checkErrorMessage;
+            } catch (parseError) {}
+            workOrderInput.setCustomValidity(checkErrorMessage);
+          } else {
+            const data = await response.json();
+
+            if (data.exists) {
+              // Work order already exists
+              workOrderInput.setCustomValidity(
+                `El número de orden '${workOrderValue}' ya está registrado.`
+              );
+            } else {
+              // Work order is unique, clear any message
+              workOrderInput.setCustomValidity("");
+            }
+          }
+        } catch (error) {
+          console.error("Error al verificar la orden de trabajo:", error);
+          workOrderInput.setCustomValidity("Error de red al verificar orden.");
+        } finally {
+          workOrderCheckInProgress = false; // Reset flag
+          // Report validity to show any custom message or clear errors
+          workOrderInput.reportValidity();
+        }
+      }
+
+      // --- Event Listeners ---
+
+      // -- Plate Listeners --
+      plateInput.addEventListener("blur", checkPlateExistence);
+      plateInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          checkPlateExistence();
+          // Find the first detail input in the invoice section and focus it
+          const firstDetailInput = invoiceItemsContainer.querySelector(
+            ".invoice-item-detail"
+          );
+          if (firstDetailInput) {
+            firstDetailInput.focus();
+          }
+        }
+      });
+
+      // -- Work Order Listeners --
+      workOrderInput.addEventListener("blur", checkWorkOrderExistence);
+      workOrderInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault(); // Prevent form submission on Enter
+          checkWorkOrderExistence();
+          // Move focus to the plate input after Enter
+          plateInput.focus();
+        }
+      });
+
+      const invoiceItemsContainer = document.getElementById(
+        "invoice-items-container"
+      );
+      const addInvoiceItemBtn = document.getElementById("add-invoice-item-btn");
+      const invoiceTotalSpan = document.getElementById("invoice-total");
+
+      // --- Invoice Functions ---
+      function createInvoiceRow() {
+        const rowDiv = document.createElement("div");
+        rowDiv.classList.add("invoice-item-row");
+
+        const detailInput = document.createElement("input");
+        detailInput.type = "text";
+        detailInput.placeholder = "Detalle";
+        detailInput.classList.add("invoice-item-detail");
+        detailInput.style.textTransform = "uppercase";
+        // detailInput.required = true; // REMOVED: Let JS handle validation on submit
+
+        const valueInput = document.createElement("input");
+        valueInput.type = "number";
+        valueInput.placeholder = "Valor";
+        valueInput.classList.add("invoice-item-value");
+        valueInput.min = "0";
+        valueInput.step = "any"; // Allow decimals
+        // valueInput.required = true; // REMOVED: Let JS handle validation on submit
+
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.textContent = "-";
+        removeBtn.classList.add("remove-invoice-item-btn");
+
+        rowDiv.appendChild(detailInput);
+        rowDiv.appendChild(valueInput);
+        rowDiv.appendChild(removeBtn);
+        invoiceItemsContainer.appendChild(rowDiv);
+
+        // Add event listeners for the new row
+        valueInput.addEventListener("input", calculateTotal);
+        valueInput.addEventListener("keydown", handleValueEnter);
+        removeBtn.addEventListener("click", () => {
+          rowDiv.remove();
+          calculateTotal();
+        });
+        detailInput.addEventListener("input", () => {
+          // Optional: could add validation or other logic here
+        });
+
+        detailInput.focus(); // Focus on the detail input of the new row
+      }
+
+      function handleValueEnter(event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          createInvoiceRow(); // Add a new row when Enter is pressed in the value field
+        }
+      }
+
+      function calculateTotal() {
+        const valueInputs = invoiceItemsContainer.querySelectorAll(
+          ".invoice-item-value"
+        );
+        let total = 0;
+        valueInputs.forEach((input) => {
+          const value = parseFloat(input.value) || 0;
+          total += value;
+        });
+        // Format as currency (e.g., COP)
+        invoiceTotalSpan.textContent = new Intl.NumberFormat("es-CO", {
+          style: "currency",
+          currency: "COP",
+        }).format(total);
+      }
+
+      // --- Initial Setup ---
+      addInvoiceItemBtn.addEventListener("click", createInvoiceRow);
+      createInvoiceRow(); // Start with one empty row
+
+      // -- Form Submit Listener --
+      document
+        .getElementById("serviceForm")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault(); // Prevent default form submission
+
+          const plateInput = document.getElementById("plate");
+          const workOrderInput = document.getElementById("workOrder"); // Get it again for safety
+          const plate = plateInput.value.toUpperCase();
+          const workOrderValue = workOrderInput.value.trim();
+
+          // --- Final checks on submit ---
+
+          // Clear previous custom validity messages before final checks
+          plateInput.setCustomValidity("");
+          workOrderInput.setCustomValidity("");
+
+          // Check basic HTML constraints first (like required)
+          if (!this.checkValidity()) {
+            // Use 'this' to refer to the form
+            this.reportValidity(); // Trigger browser validation UI
+            return; // Stop submission
+          }
+
+          // Perform final existence checks *again* right before submission
+
+          // Check Work Order Existence (Final)
+          if (workOrderCheckInProgress) {
+            alert(
+              "Verificación de orden de trabajo aún en progreso. Por favor espere."
+            );
+            return;
+          }
+          workOrderCheckInProgress = true;
+          let finalWorkOrderCheckOk = false;
+          try {
+            const woResponse = await fetch(
+              `/services/check-workorder/${workOrderValue}`
+            );
+            if (!woResponse.ok) {
+              let checkErrorMessage = `Error del servidor al verificar la orden: ${woResponse.status}`;
+              try {
+                const errorData = await woResponse.json();
+                checkErrorMessage = errorData.message || checkErrorMessage;
+              } catch (e) {}
+              alert(
+                `Error final al verificar la orden de trabajo: ${checkErrorMessage}`
+              );
+            } else {
+              const woData = await woResponse.json();
+              if (woData.exists) {
+                alert(
+                  `El número de orden '${workOrderValue}' ya está registrado. Por favor, use uno diferente.`
+                );
+                workOrderInput.focus();
+              } else {
+                finalWorkOrderCheckOk = true; // Work order is unique
+              }
+            }
+          } catch (error) {
+            console.error(
+              "Error en la verificación final de la orden de trabajo:",
+              error
+            );
+            alert(
+              `Error de red durante la verificación final de la orden: ${error.message}`
+            );
+          } finally {
+            workOrderCheckInProgress = false;
+          }
+
+          if (!finalWorkOrderCheckOk) {
+            return; // Stop if work order check failed
+          }
+
+          // Check Plate Existence (Final)
+          if (plateCheckInProgress) {
+            alert("Verificación de placa aún en progreso. Por favor espere.");
+            return;
+          }
+          plateCheckInProgress = true;
+          let finalPlateCheckOk = false;
+          try {
+            const response = await fetch(`/cars/check/${plate}`);
+            if (!response.ok) {
+              let checkErrorMessage = `Error del servidor al verificar la placa: ${response.status}`;
+              try {
+                const errorData = await response.json();
+                checkErrorMessage = errorData.message || checkErrorMessage;
+              } catch (parseError) {}
+              alert(`Error final al verificar la placa: ${checkErrorMessage}`);
+            } else {
+              const data = await response.json();
+              if (!data.exists) {
+                alert(
+                  `La placa ${plate} no está registrada. Debe crear el vehículo primero.`
+                );
+                plateInput.focus();
+              } else {
+                finalPlateCheckOk = true; // Plate exists!
+              }
+            }
+          } catch (error) {
+            console.error("Error en la verificación final de la placa:", error);
+            alert(
+              `Error de red durante la verificación final de la placa: ${error.message}`
+            );
+          } finally {
+            plateCheckInProgress = false;
+          }
+
+          // Only proceed if BOTH final checks passed
+          if (!finalPlateCheckOk) {
+            // Already checked work order above
+            return; // Stop submission if the final plate check failed
+          }
+
+          // --- Gather Invoice Data ---
+          const invoiceRows =
+            invoiceItemsContainer.querySelectorAll(".invoice-item-row");
+          let workDescription = "";
+          let calculatedCost = 0;
+          let validItemsCount = 0; // Count valid items
+          let firstInvalidRow = null; // Keep track of the first error
+
+          invoiceRows.forEach((row, index) => {
+            // If we already found an error, don't process more rows for data gathering
+            if (firstInvalidRow) return;
+
+            const detailInput = row.querySelector(".invoice-item-detail");
+            const valueInput = row.querySelector(".invoice-item-value");
+            const detail = detailInput.value.trim().toUpperCase();
+            const valueStr = valueInput.value.trim();
+            const value = parseFloat(valueStr);
+
+            // Check if the row is completely empty (or value is 0)
+            const isRowEffectivelyEmpty = !detail && (!valueStr || value === 0);
+
+            // If it's the *only* row and it's empty, it's an error
+            if (invoiceRows.length === 1 && isRowEffectivelyEmpty) {
+              firstInvalidRow = {
+                input: detailInput,
+                message:
+                  "Por favor, añada al menos un detalle de servicio con un valor válido.",
+              };
+              return; // Stop processing this row
+            }
+            // If it's *not* the only row and it's effectively empty, just ignore it
+            else if (isRowEffectivelyEmpty && invoiceRows.length > 1) {
+              return; // Skip processing this empty row
+            }
+
+            // --- Validate non-empty rows ---
+            if (!detail) {
+              firstInvalidRow = {
+                input: detailInput,
+                message: `Por favor, ingrese un detalle para el ítem ${
+                  index + 1
+                }.`,
+              };
+              return; // Stop processing this row
+            }
+            // Check if value is empty, not a number, or negative (allow 0 if detail exists)
+            if (!valueStr || isNaN(value) || value < 0) {
+              firstInvalidRow = {
+                input: valueInput,
+                message: `Por favor, ingrese un valor válido (mayor o igual a 0) para el ítem ${
+                  index + 1
+                }.`,
+              };
+              return; // Stop processing this row
+            }
+
+            // If row is valid and not effectively empty
+            workDescription += `${detail}: ${new Intl.NumberFormat("es-CO", {
+              style: "currency",
+              currency: "COP",
+            }).format(value)}\n`;
+            calculatedCost += value;
+            validItemsCount++; // Increment valid items count
+          });
+
+          // Check if there was any validation error during the loop
+          if (firstInvalidRow) {
+            alert(firstInvalidRow.message);
+            firstInvalidRow.input.focus();
+            return; // Stop submission
+          }
+
+          // Check if at least one valid item was found after the loop
+          if (validItemsCount === 0) {
+            alert("Por favor, añada al menos un detalle de servicio válido.");
+            // Focus on the first detail input if available
+            const firstDetail = invoiceItemsContainer.querySelector(
+              ".invoice-item-detail"
+            );
+            if (firstDetail) firstDetail.focus();
+            return; // Stop if no valid items
+          }
+
+          // --- Checks passed, proceed with service registration ---
+          const serviceData = {
+            workOrder: workOrderValue,
+            plate,
+            work: workDescription.trim(), // Use the generated description, trim trailing newline
+            cost: calculatedCost, // Use the calculated total
+          };
+
+          // ... rest of the submit logic (fetch to register service) ...
+          try {
+            const registerResponse = await fetch(`/api/services`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orden_trabajo: parseInt(workOrderValue),
+                placa: plate,
+                tipo_servicio: "Servicio múltiple",
+                descripcion: workDescription.trim(),
+                costo: calculatedCost
+              }),
+            });
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(serviceData),
+            });
+
+            if (!registerResponse.ok) {
+              let errorMessage = "Error al registrar el servicio.";
+              try {
+                const errorData = await registerResponse.json();
+                errorMessage =
+                  errorData.message ||
+                  `Error del servidor: ${registerResponse.status}`;
+              } catch (parseError) {
+                errorMessage = `Error del servidor: ${registerResponse.status}. No se pudo obtener más detalle.`;
+              }
+              throw new Error(errorMessage);
+            }
+
+            alert("Servicio registrado exitosamente.");
+            // Reset form AND invoice section
+            document.getElementById("serviceForm").reset();
+            invoiceItemsContainer.innerHTML =
+              "<label>Detalles del Servicio:</label>"; // Clear old rows
+            createInvoiceRow(); // Add back one empty row
+            calculateTotal(); // Reset total display
+
+            // Optionally pre-fill plate again if needed, or clear it based on workflow
+            if (plateFromUrl) {
+              document.getElementById("plate").value = plateFromUrl; // Restore if came from URL
+            }
+            document.getElementById("workOrder").focus(); // Focus on the first field
+          } catch (error) {
+            console.error(
+              "Error en el proceso de registro del servicio:",
+              error
+            );
+            alert(
+              `No se pudo registrar el servicio. Detalles: ${error.message}`
+            );
+          }
+        });
+    </script>
+  </body>
+</html>
