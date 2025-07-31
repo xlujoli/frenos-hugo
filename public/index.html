@@ -82,6 +82,26 @@
         display: flex;
         align-items: center;
       }
+
+      /* Estilos para el botón de agregar detalle */
+      .add-detail-btn {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 15px 0;
+        width: 100%;
+      }
+
+      .add-detail-btn:hover {
+        background: #218838;
+        transform: translateY(-1px);
+      }
     </style>
   </head>
   <body>
@@ -141,6 +161,10 @@
           <strong>Total Calculado:</strong>
           <span id="invoice-total">$0.00</span>
         </div>
+
+        <button type="button" id="add-detail-btn" class="add-detail-btn">
+          ➕ Agregar Detalle
+        </button>
 
         <button type="submit">Registrar Servicio</button>
       </form>
@@ -583,6 +607,11 @@
       // --- Initial Setup ---
       // Start with one empty row
       createInvoiceRow();
+
+      // Event listener para el botón de agregar detalle
+      document.getElementById("add-detail-btn").addEventListener("click", function () {
+        createInvoiceRow();
+      });
 
       // -- Form Submit Listener --
       document

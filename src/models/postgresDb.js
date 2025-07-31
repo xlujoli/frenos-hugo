@@ -90,7 +90,9 @@ class PostgresDatabase {
         `);
         console.log("✅ Migración: Tabla historial_servicios eliminada");
       } catch (error) {
-        console.log("⚠️ Tabla historial_servicios ya había sido eliminada o no existía");
+        console.log(
+          "⚠️ Tabla historial_servicios ya había sido eliminada o no existía"
+        );
       }
 
       // Migración: Eliminar columna tipo_servicio si existe
