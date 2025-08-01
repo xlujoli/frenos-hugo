@@ -493,11 +493,31 @@
         }
       });
 
-      plateInput.addEventListener("keydown", function (event) {
+      plateInput.addEventListener("keydown", async function (event) {
         if (event.key === "Tab" || event.key === "Enter") {
           const plate = this.value.trim();
           if (plate) {
-            setTimeout(() => verifyPlateAutomatically(plate), 100);
+            await verifyPlateAutomatically(plate);
+            
+            // Si es Enter y la placa está registrada, enfocar el primer campo de detalle
+            if (event.key === "Enter" && plateVerificationStatus.verified && plateVerificationStatus.exists) {
+              event.preventDefault();
+              
+              // Buscar el primer campo de detalle disponible
+              const firstDetailInput = document.querySelector('.invoice-item-detail');
+              if (firstDetailInput) {
+                firstDetailInput.focus();
+              } else {
+                // Si no hay campos de detalle, crear uno nuevo y enfocarlo
+                setTimeout(() => {
+                  const newRow = createInvoiceRow();
+                  const detailInput = newRow.querySelector('.invoice-item-detail');
+                  if (detailInput) {
+                    detailInput.focus();
+                  }
+                }, 100);
+              }
+            }
           }
         }
       });
