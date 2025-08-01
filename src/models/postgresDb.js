@@ -12,25 +12,28 @@ class PostgresDatabase {
     });
 
     // Configurar eventos del pool
-    this.pool.on('connect', () => {
-      console.log('✅ Nueva conexión establecida con PostgreSQL');
+    this.pool.on("connect", () => {
+      console.log("✅ Nueva conexión establecida con PostgreSQL");
       this.isConnected = true;
     });
 
-    this.pool.on('error', (err) => {
-      console.error('❌ Error en el pool de PostgreSQL:', err);
+    this.pool.on("error", (err) => {
+      console.error("❌ Error en el pool de PostgreSQL:", err);
       this.isConnected = false;
     });
   }
 
   async testConnection() {
     try {
-      const result = await this.query('SELECT NOW() as current_time');
-      console.log('🔗 Conexión a PostgreSQL exitosa:', result.rows[0].current_time);
+      const result = await this.query("SELECT NOW() as current_time");
+      console.log(
+        "🔗 Conexión a PostgreSQL exitosa:",
+        result.rows[0].current_time
+      );
       this.isConnected = true;
       return true;
     } catch (error) {
-      console.error('❌ Error de conexión a PostgreSQL:', error);
+      console.error("❌ Error de conexión a PostgreSQL:", error);
       this.isConnected = false;
       return false;
     }
@@ -93,7 +96,7 @@ class PostgresDatabase {
   // Métodos para servicios
   async getServices(filters = {}) {
     try {
-      let query = 'SELECT * FROM servicios WHERE 1=1';
+      let query = "SELECT * FROM servicios WHERE 1=1";
       const params = [];
       let paramCount = 0;
 
@@ -115,7 +118,7 @@ class PostgresDatabase {
         params.push(filters.fecha_desde);
       }
 
-      query += ' ORDER BY fecha_creacion DESC';
+      query += " ORDER BY fecha_creacion DESC";
 
       if (filters.limit) {
         paramCount++;
@@ -134,7 +137,7 @@ class PostgresDatabase {
 
       return result.rows;
     } catch (error) {
-      console.error('❌ Error obteniendo servicios:', error);
+      console.error("❌ Error obteniendo servicios:", error);
       throw error;
     }
   }
@@ -147,10 +150,15 @@ class PostgresDatabase {
         VALUES ($1, $2, $3, $4)
         RETURNING *
       `;
-      const result = await this.query(query, [orden_trabajo, placa, descripcion, costo]);
+      const result = await this.query(query, [
+        orden_trabajo,
+        placa,
+        descripcion,
+        costo,
+      ]);
       return result.rows[0];
     } catch (error) {
-      console.error('❌ Error creando servicio:', error);
+      console.error("❌ Error creando servicio:", error);
       throw error;
     }
   }
@@ -158,7 +166,7 @@ class PostgresDatabase {
   // Métodos para vehículos
   async getVehicles(filters = {}) {
     try {
-      let query = 'SELECT * FROM vehiculos WHERE 1=1';
+      let query = "SELECT * FROM vehiculos WHERE 1=1";
       const params = [];
       let paramCount = 0;
 
@@ -168,12 +176,12 @@ class PostgresDatabase {
         params.push(filters.placa);
       }
 
-      query += ' ORDER BY fecha_creacion DESC';
+      query += " ORDER BY fecha_creacion DESC";
 
       const result = await this.query(query, params);
       return result.rows;
     } catch (error) {
-      console.error('❌ Error obteniendo vehículos:', error);
+      console.error("❌ Error obteniendo vehículos:", error);
       throw error;
     }
   }
@@ -186,32 +194,38 @@ class PostgresDatabase {
         VALUES ($1, $2, $3, $4, $5)
         RETURNING *
       `;
-      const result = await this.query(query, [placa, marca, modelo, propietario, telefono]);
+      const result = await this.query(query, [
+        placa,
+        marca,
+        modelo,
+        propietario,
+        telefono,
+      ]);
       return result.rows[0];
     } catch (error) {
-      console.error('❌ Error creando vehículo:', error);
+      console.error("❌ Error creando vehículo:", error);
       throw error;
     }
   }
 
   async getVehicleByPlate(placa) {
     try {
-      const query = 'SELECT * FROM vehiculos WHERE placa = $1';
+      const query = "SELECT * FROM vehiculos WHERE placa = $1";
       const result = await this.query(query, [placa]);
       return result.rows[0] || null;
     } catch (error) {
-      console.error('❌ Error obteniendo vehículo por placa:', error);
+      console.error("❌ Error obteniendo vehículo por placa:", error);
       throw error;
     }
   }
 
   async deleteService(id) {
     try {
-      const query = 'DELETE FROM servicios WHERE id = $1 RETURNING *';
+      const query = "DELETE FROM servicios WHERE id = $1 RETURNING *";
       const result = await this.query(query, [id]);
       return result.rows[0] || null;
     } catch (error) {
-      console.error('❌ Error eliminando servicio:', error);
+      console.error("❌ Error eliminando servicio:", error);
       throw error;
     }
   }
@@ -225,44 +239,50 @@ class PostgresDatabase {
         WHERE id = $1
         RETURNING *
       `;
-      const result = await this.query(query, [id, orden_trabajo, placa, descripcion, costo]);
+      const result = await this.query(query, [
+        id,
+        orden_trabajo,
+        placa,
+        descripcion,
+        costo,
+      ]);
       return result.rows[0] || null;
     } catch (error) {
-      console.error('❌ Error actualizando servicio:', error);
+      console.error("❌ Error actualizando servicio:", error);
       throw error;
     }
   }
 
   async deleteVehicle(id) {
     try {
-      const query = 'DELETE FROM vehiculos WHERE id = $1 RETURNING *';
+      const query = "DELETE FROM vehiculos WHERE id = $1 RETURNING *";
       const result = await this.query(query, [id]);
       return result.rows[0] || null;
     } catch (error) {
-      console.error('❌ Error eliminando vehículo:', error);
+      console.error("❌ Error eliminando vehículo:", error);
       throw error;
     }
   }
 
   async getStats() {
     try {
-      const vehiculosQuery = 'SELECT COUNT(*) as total FROM vehiculos';
-      const serviciosQuery = 'SELECT COUNT(*) as total FROM servicios';
-      const ingresosTotalQuery = 'SELECT SUM(costo) as total FROM servicios';
-      
+      const vehiculosQuery = "SELECT COUNT(*) as total FROM vehiculos";
+      const serviciosQuery = "SELECT COUNT(*) as total FROM servicios";
+      const ingresosTotalQuery = "SELECT SUM(costo) as total FROM servicios";
+
       const [vehiculos, servicios, ingresos] = await Promise.all([
         this.query(vehiculosQuery),
         this.query(serviciosQuery),
-        this.query(ingresosTotalQuery)
+        this.query(ingresosTotalQuery),
       ]);
 
       return {
         vehiculos: parseInt(vehiculos.rows[0].total) || 0,
         servicios: parseInt(servicios.rows[0].total) || 0,
-        ingresos_total: parseFloat(ingresos.rows[0].total) || 0
+        ingresos_total: parseFloat(ingresos.rows[0].total) || 0,
       };
     } catch (error) {
-      console.error('❌ Error obteniendo estadísticas:', error);
+      console.error("❌ Error obteniendo estadísticas:", error);
       throw error;
     }
   }
