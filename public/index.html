@@ -25,16 +25,20 @@
       }
 
       #invoice-total-container::before {
-        content: '';
+        content: "";
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%), 
-                    linear-gradient(-45deg, rgba(255,255,255,0.1) 25%, transparent 25%), 
-                    linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.1) 75%), 
-                    linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.1) 75%);
+        background: linear-gradient(
+            45deg,
+            rgba(255, 255, 255, 0.1) 25%,
+            transparent 25%
+          ),
+          linear-gradient(-45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.1) 75%),
+          linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.1) 75%);
         background-size: 20px 20px;
         background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         opacity: 0.1;
@@ -44,7 +48,7 @@
         color: white;
         font-size: 16px;
         font-weight: 600;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         position: relative;
         z-index: 1;
       }
@@ -53,7 +57,7 @@
         color: #ffd700;
         font-size: 24px;
         font-weight: bold;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         position: relative;
         z-index: 1;
         margin-left: 10px;
@@ -62,9 +66,15 @@
       }
 
       @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
       }
 
       .card input[type="number"],
@@ -147,13 +157,18 @@
       }
 
       .add-detail-btn::before {
-        content: '';
+        content: "";
         position: absolute;
         top: 0;
         left: -100%;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
         transition: left 0.5s;
       }
 
