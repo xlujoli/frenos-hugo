@@ -26,12 +26,25 @@ app.use((req, res, next) => {
 // Middleware para verificar conexión a DB
 app.use(async (req, res, next) => {
   if (!db.isConnected && req.path.startsWith("/api/")) {
-    return res.status(503).json({
-      error: "Servicio no disponible",
-      message: "Base de datos no conectada",
-    });
+    console.log("⚠️ Base de datos desconectada, intentando reconectar...");
+    try {
+      await db.testConnection();
+      if (db.isConnected) {
+        console.log("✅ Reconexión exitosa");
+        next();
+      } else {
+        throw new Error("No se pudo establecer conexión");
+      }
+    } catch (error) {
+      console.error("❌ Error de reconexión:", error);
+      return res.status(503).json({
+        error: "Servicio no disponible",
+        message: "Base de datos no conectada",
+      });
+    }
+  } else {
+    next();
   }
-  next();
 });
 
 // Rutas de salud
