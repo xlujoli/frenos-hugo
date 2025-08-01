@@ -350,7 +350,7 @@ app.use((err, req, res, next) => {
 async function startServer() {
   try {
     // Inicializar base de datos
-    await db.init();
+    await db.initTables();
 
     // Iniciar servidor
     const server = app.listen(PORT, "0.0.0.0", () => {
