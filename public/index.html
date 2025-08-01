@@ -656,7 +656,13 @@
         detailInput.addEventListener("keydown", function (event) {
           if (event.key === "Tab" || event.key === "Enter") {
             const detailValue = this.value.trim();
-            if (!detailValue) {
+            
+            // Verificar si este es el último campo de detalle
+            const allDetailInputs = invoiceItemsContainer.querySelectorAll(".invoice-item-detail");
+            const isLastDetailInput = this === allDetailInputs[allDetailInputs.length - 1];
+            
+            if (!detailValue && !isLastDetailInput) {
+              // Solo validar si NO es el último campo de detalle
               event.preventDefault();
               this.focus();
               // Agregar feedback visual temporal
@@ -670,14 +676,15 @@
               }, 2000);
 
               return false;
-            } else if (event.key === "Enter") {
+            } else if (event.key === "Enter" && detailValue) {
               // Si hay contenido y se presiona Enter, mover al campo valor
               event.preventDefault();
-              const valueInput = rowDiv.querySelector('.invoice-item-value');
+              const valueInput = rowDiv.querySelector(".invoice-item-value");
               if (valueInput) {
                 valueInput.focus();
               }
             }
+            // Si es el último campo de detalle, permitir navegación normal con TAB
           }
         });
 
@@ -687,10 +694,16 @@
           this.style.backgroundColor = "white";
         });
 
-        // Validación adicional en blur (cuando pierde el foco)
+        // Validación adicional en blur (cuando pierde el foco) - solo para campos que no son el último
         detailInput.addEventListener("blur", function () {
           const detailValue = this.value.trim();
-          if (!detailValue) {
+          
+          // Verificar si este es el último campo de detalle
+          const allDetailInputs = invoiceItemsContainer.querySelectorAll(".invoice-item-detail");
+          const isLastDetailInput = this === allDetailInputs[allDetailInputs.length - 1];
+          
+          if (!detailValue && !isLastDetailInput) {
+            // Solo mostrar error si NO es el último campo de detalle
             this.style.borderColor = "#dc3545";
             this.style.backgroundColor = "#fff5f5";
           }
