@@ -652,7 +652,7 @@
           calculateTotal();
         });
 
-        // Validación para el campo detalle - no permitir pasar al valor si está vacío
+        // Navegación del campo detalle al campo valor
         detailInput.addEventListener("keydown", function (event) {
           if (event.key === "Tab" || event.key === "Enter") {
             const detailValue = this.value.trim();
@@ -670,6 +670,13 @@
               }, 2000);
 
               return false;
+            } else if (event.key === "Enter") {
+              // Si hay contenido y se presiona Enter, mover al campo valor
+              event.preventDefault();
+              const valueInput = rowDiv.querySelector('.invoice-item-value');
+              if (valueInput) {
+                valueInput.focus();
+              }
             }
           }
         });
@@ -699,10 +706,13 @@
           createInvoiceRow(); // Add a new row when Enter is pressed in the value field
         } else if (event.key === "Tab") {
           // Verificar si este es el último campo de valor
-          const allValueInputs = invoiceItemsContainer.querySelectorAll(".invoice-item-value");
+          const allValueInputs = invoiceItemsContainer.querySelectorAll(
+            ".invoice-item-value"
+          );
           const currentInput = event.target;
-          const isLastValueInput = currentInput === allValueInputs[allValueInputs.length - 1];
-          
+          const isLastValueInput =
+            currentInput === allValueInputs[allValueInputs.length - 1];
+
           if (isLastValueInput) {
             // Si es el último campo de valor, mover el cursor al botón "Registrar Servicio"
             event.preventDefault();
