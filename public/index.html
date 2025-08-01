@@ -449,7 +449,9 @@
 
               plateStatus.innerHTML = `
                 <span style="color: #28a745;">
-                  ✅ ${data.data.marca} ${data.data.modelo} - ${data.data.propietario}${data.data.telefono ? ` - Tel: ${data.data.telefono}` : ''}
+                  ✅ ${data.data.marca} ${data.data.modelo} - ${
+                data.data.propietario
+              }${data.data.telefono ? ` - Tel: ${data.data.telefono}` : ""}
                 </span>
               `;
             } else {
