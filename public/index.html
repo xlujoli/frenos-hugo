@@ -250,7 +250,7 @@
           <span id="invoice-total">$0.00</span>
         </div>
 
-        <button type="submit">Registrar Servicio</button>
+        <button type="submit" id="submit-btn">Registrar Servicio</button>
       </form>
       <div id="message-area" style="margin-top: 15px; text-align: center"></div>
     </main>
@@ -498,20 +498,28 @@
           const plate = this.value.trim();
           if (plate) {
             await verifyPlateAutomatically(plate);
-            
+
             // Si es Enter y la placa está registrada, enfocar el primer campo de detalle
-            if (event.key === "Enter" && plateVerificationStatus.verified && plateVerificationStatus.exists) {
+            if (
+              event.key === "Enter" &&
+              plateVerificationStatus.verified &&
+              plateVerificationStatus.exists
+            ) {
               event.preventDefault();
-              
+
               // Buscar el primer campo de detalle disponible
-              const firstDetailInput = document.querySelector('.invoice-item-detail');
+              const firstDetailInput = document.querySelector(
+                ".invoice-item-detail"
+              );
               if (firstDetailInput) {
                 firstDetailInput.focus();
               } else {
                 // Si no hay campos de detalle, crear uno nuevo y enfocarlo
                 setTimeout(() => {
                   const newRow = createInvoiceRow();
-                  const detailInput = newRow.querySelector('.invoice-item-detail');
+                  const detailInput = newRow.querySelector(
+                    ".invoice-item-detail"
+                  );
                   if (detailInput) {
                     detailInput.focus();
                   }
@@ -689,6 +697,20 @@
         if (event.key === "Enter") {
           event.preventDefault();
           createInvoiceRow(); // Add a new row when Enter is pressed in the value field
+        } else if (event.key === "Tab") {
+          // Verificar si este es el último campo de valor
+          const allValueInputs = invoiceItemsContainer.querySelectorAll(".invoice-item-value");
+          const currentInput = event.target;
+          const isLastValueInput = currentInput === allValueInputs[allValueInputs.length - 1];
+          
+          if (isLastValueInput) {
+            // Si es el último campo de valor, mover el cursor al botón "Registrar Servicio"
+            event.preventDefault();
+            const submitBtn = document.getElementById("submit-btn");
+            if (submitBtn) {
+              submitBtn.focus();
+            }
+          }
         }
       }
 
