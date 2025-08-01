@@ -134,6 +134,14 @@
             La placa <strong>${plateFromUrl}</strong> no está registrada. Complete este formulario para continuar con el servicio de la orden de trabajo <strong>#${workOrderFromUrl}</strong>.
           `;
         }
+
+        // Enfocar automáticamente el campo "Marca" cuando viene desde redirección
+        setTimeout(() => {
+          const brandInput = document.getElementById("brand");
+          if (brandInput) {
+            brandInput.focus();
+          }
+        }, 100);
       }
 
       form.addEventListener("submit", async function (event) {
