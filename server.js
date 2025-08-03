@@ -80,14 +80,6 @@ app.get("/index.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.get("/cars.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "cars.html"));
-});
-
-app.get("/consultation.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "consultation.html"));
-});
-
 // API Endpoints para servicios
 app.post("/api/services", async (req, res) => {
   try {
@@ -132,60 +124,6 @@ app.get("/api/services", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error al obtener servicios",
-      error: error.message,
-    });
-  }
-});
-
-app.delete("/api/services/:id", async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    const servicioEliminado = await db.deleteService(id);
-
-    if (servicioEliminado) {
-      res.json({
-        success: true,
-        message: "Servicio eliminado exitosamente",
-        data: servicioEliminado,
-      });
-    } else {
-      res.status(404).json({
-        success: false,
-        message: "Servicio no encontrado",
-      });
-    }
-  } catch (error) {
-    console.error("Error eliminando servicio:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error al eliminar servicio",
-      error: error.message,
-    });
-  }
-});
-
-app.put("/api/services/:id", async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    const servicioActualizado = await db.updateService(id, req.body);
-
-    if (servicioActualizado) {
-      res.json({
-        success: true,
-        message: "Servicio actualizado exitosamente",
-        data: servicioActualizado,
-      });
-    } else {
-      res.status(404).json({
-        success: false,
-        message: "Servicio no encontrado",
-      });
-    }
-  } catch (error) {
-    console.error("Error actualizando servicio:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error al actualizar servicio",
       error: error.message,
     });
   }
@@ -245,33 +183,6 @@ app.get("/api/cars", async (req, res) => {
   }
 });
 
-app.delete("/api/cars/:id", async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    const vehiculoEliminado = await db.deleteVehicle(id);
-
-    if (vehiculoEliminado) {
-      res.json({
-        success: true,
-        message: "Vehículo eliminado exitosamente",
-        data: vehiculoEliminado,
-      });
-    } else {
-      res.status(404).json({
-        success: false,
-        message: "Vehículo no encontrado",
-      });
-    }
-  } catch (error) {
-    console.error("Error eliminando vehículo:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error al eliminar vehículo",
-      error: error.message,
-    });
-  }
-});
-
 // Endpoint para verificar si una placa existe
 app.get("/api/cars/verify/:plate", async (req, res) => {
   try {
@@ -326,45 +237,6 @@ app.get("/api/cars/verify/:plate", async (req, res) => {
       message: "Error al verificar placa",
       error: error.message,
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
-  }
-});
-
-// Endpoint de estadísticas
-app.get("/api/stats", async (req, res) => {
-  try {
-    const stats = await db.getStats();
-
-    res.json({
-      success: true,
-      stats: stats,
-    });
-  } catch (error) {
-    console.error("Error obteniendo estadísticas:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error al obtener estadísticas",
-      error: error.message,
-    });
-  }
-});
-
-// Endpoint para buscar servicios por placa
-app.get("/api/services/search/:placa", async (req, res) => {
-  try {
-    const servicios = await db.getServices({ placa: req.params.placa });
-
-    res.json({
-      success: true,
-      data: servicios,
-      count: servicios.length,
-    });
-  } catch (error) {
-    console.error("Error buscando servicios:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error al buscar servicios",
-      error: error.message,
     });
   }
 });
