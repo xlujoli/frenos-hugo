@@ -437,9 +437,15 @@
           const response = await fetch(
             `/api/cars/verify/${encodeURIComponent(cleanPlate)}`
           );
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          
           const data = await response.json();
+          console.log('Respuesta de verificación:', data);
 
-          if (response.ok && data.success) {
+          if (data.success) {
             plateVerificationStatus.verified = true;
             plateVerificationStatus.lastCheckedPlate = cleanPlate;
 
@@ -468,12 +474,13 @@
               `;
             }
           } else {
-            plateStatus.innerHTML = `<span style="color: #dc3545;">❌ Error al verificar placa</span>`;
+            console.error('Error en la respuesta:', data);
+            plateStatus.innerHTML = `<span style="color: #dc3545;">❌ Error: ${data.message || 'Error al verificar placa'}</span>`;
             plateVerificationStatus.verified = false;
           }
         } catch (error) {
           console.error("Error verificando placa:", error);
-          plateStatus.innerHTML = `<span style="color: #dc3545;">❌ Error de conexión</span>`;
+          plateStatus.innerHTML = `<span style="color: #dc3545;">❌ Error de conexión: ${error.message}</span>`;
           plateVerificationStatus.verified = false;
         }
       }

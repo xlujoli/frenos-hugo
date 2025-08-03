@@ -275,10 +275,35 @@ app.delete("/api/cars/:id", async (req, res) => {
 // Endpoint para verificar si una placa existe
 app.get("/api/cars/verify/:plate", async (req, res) => {
   try {
-    const plate = req.params.plate.toUpperCase();
+    console.log(`🔍 Verificando placa: ${req.params.plate}`);
+    
+    // Validar que la placa no esté vacía
+    if (!req.params.plate || !req.params.plate.trim()) {
+      return res.status(400).json({
+        success: false,
+        exists: false,
+        message: "Placa no válida",
+        error: "La placa no puede estar vacía"
+      });
+    }
+
+    const plate = req.params.plate.toUpperCase().trim();
+    console.log(`🔍 Placa normalizada: ${plate}`);
+    
+    // Verificar conexión a la base de datos
+    if (!db.isConnected) {
+      console.log("⚠️ Base de datos desconectada, intentando reconectar...");
+      await db.testConnection();
+      if (!db.isConnected) {
+        throw new Error("Base de datos no disponible");
+      }
+    }
+    
     const vehiculos = await db.getVehicles({ placa: plate });
+    console.log(`📊 Vehículos encontrados: ${vehiculos ? vehiculos.length : 0}`);
 
     if (vehiculos && vehiculos.length > 0) {
+      console.log(`✅ Vehículo encontrado: ${JSON.stringify(vehiculos[0])}`);
       res.json({
         success: true,
         exists: true,
@@ -286,6 +311,7 @@ app.get("/api/cars/verify/:plate", async (req, res) => {
         data: vehiculos[0],
       });
     } else {
+      console.log(`❌ Vehículo no encontrado para placa: ${plate}`);
       res.json({
         success: true,
         exists: false,
@@ -293,11 +319,13 @@ app.get("/api/cars/verify/:plate", async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("Error verificando placa:", error);
+    console.error("❌ Error verificando placa:", error);
+    console.error("❌ Stack trace:", error.stack);
     res.status(500).json({
       success: false,
       message: "Error al verificar placa",
       error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
@@ -362,14 +390,28 @@ app.use((err, req, res, next) => {
 // Función para inicializar la aplicación
 async function startServer() {
   try {
-    // Inicializar base de datos
-    await db.initTables();
+    console.log("🔄 Verificando conexión a la base de datos...");
+    
+    // Probar conexión primero
+    const connectionOk = await db.testConnection();
+    
+    if (connectionOk) {
+      console.log("🔄 Inicializando tablas...");
+      await db.initTables();
+      console.log("✅ Base de datos lista");
+    } else {
+      console.warn("⚠️ No se pudo conectar a la base de datos, servidor en modo degradado");
+    }
 
     // Iniciar servidor
     const server = app.listen(PORT, "0.0.0.0", () => {
       console.log(`✅ Servidor ejecutándose en puerto ${PORT}`);
       console.log(`🌐 URL: http://localhost:${PORT}`);
-      console.log(`🗄️ Base de datos: PostgreSQL conectada`);
+      if (db.isConnected) {
+        console.log(`🗄️ Base de datos: PostgreSQL conectada`);
+      } else {
+        console.log(`🗄️ Base de datos: Desconectada (modo degradado)`);
+      }
     });
 
     server.on("error", (error) => {
@@ -399,7 +441,18 @@ async function startServer() {
     });
   } catch (error) {
     console.error("❌ Error iniciando servidor:", error);
-    process.exit(1);
+    console.log("🔄 Intentando iniciar servidor sin base de datos...");
+    
+    // Intentar iniciar el servidor aunque falle la conexión a la DB
+    try {
+      const server = app.listen(PORT, "0.0.0.0", () => {
+        console.log(`⚠️ Servidor ejecutándose en puerto ${PORT} (sin base de datos)`);
+        console.log(`🌐 URL: http://localhost:${PORT}`);
+      });
+    } catch (serverError) {
+      console.error("❌ No se puede iniciar el servidor:", serverError);
+      process.exit(1);
+    }
   }
 }
 

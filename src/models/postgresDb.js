@@ -80,6 +80,11 @@ class PostgresDatabase {
         )
       `);
 
+      // Add 'fecha_creacion' to 'vehiculos' if it doesn't exist
+      await this.query(`
+        ALTER TABLE vehiculos ADD COLUMN IF NOT EXISTS fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      `);
+
       console.log("✅ Tablas inicializadas correctamente");
       this.isConnected = true;
     } catch (error) {
@@ -166,22 +171,29 @@ class PostgresDatabase {
   // Métodos para vehículos
   async getVehicles(filters = {}) {
     try {
+      console.log(`📊 Buscando vehículos con filtros:`, filters);
+      
       let query = "SELECT * FROM vehiculos WHERE 1=1";
       const params = [];
       let paramCount = 0;
 
       if (filters.placa) {
         paramCount++;
-        query += ` AND placa = $${paramCount}`;
+        query += ` AND UPPER(placa) = UPPER($${paramCount})`;
         params.push(filters.placa);
       }
 
       query += " ORDER BY fecha_creacion DESC";
+      
+      console.log(`📊 Query SQL: ${query}`, params);
 
       const result = await this.query(query, params);
+      console.log(`📊 Resultados encontrados: ${result.rows.length}`);
+      
       return result.rows;
     } catch (error) {
       console.error("❌ Error obteniendo vehículos:", error);
+      console.error("❌ Filtros aplicados:", filters);
       throw error;
     }
   }
