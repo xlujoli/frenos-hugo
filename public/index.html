@@ -661,6 +661,53 @@
           calculateTotal();
         });
 
+        // Validación en tiempo real para el campo detalle
+        detailInput.addEventListener("input", function() {
+          const detailValue = this.value.trim();
+          const valueInput = this.parentNode.querySelector(".invoice-item-value");
+          const valueValue = valueInput.value.trim();
+          
+          // Restaurar apariencia normal del campo detalle
+          this.style.borderColor = "#ddd";
+          this.style.backgroundColor = "white";
+          
+          // Si hay detalle pero no hay valor, marcar el campo valor como requerido
+          if (detailValue && (!valueValue || parseFloat(valueValue) <= 0)) {
+            valueInput.style.borderColor = "#ffc107";
+            valueInput.style.backgroundColor = "#fff8e1";
+            valueInput.placeholder = "Valor requerido";
+          } else if (!detailValue) {
+            // Si no hay detalle, restaurar campo valor
+            valueInput.style.borderColor = "#ddd";
+            valueInput.style.backgroundColor = "white";
+            valueInput.placeholder = "Valor";
+          }
+        });
+
+        // Validación en tiempo real para el campo valor
+        valueInput.addEventListener("input", function() {
+          const valueValue = parseFloat(this.value) || 0;
+          const detailInput = this.parentNode.querySelector(".invoice-item-detail");
+          const detailValue = detailInput.value.trim();
+          
+          // Restaurar apariencia normal del campo valor
+          this.style.borderColor = "#ddd";
+          this.style.backgroundColor = "white";
+          this.placeholder = "Valor";
+          
+          // Si hay valor pero no hay detalle, marcar el campo detalle como requerido
+          if (valueValue > 0 && !detailValue) {
+            detailInput.style.borderColor = "#ffc107";
+            detailInput.style.backgroundColor = "#fff8e1";
+            detailInput.placeholder = "Descripción requerida";
+          } else if (valueValue <= 0) {
+            // Si no hay valor válido, restaurar campo detalle
+            detailInput.style.borderColor = "#ddd";
+            detailInput.style.backgroundColor = "white";
+            detailInput.placeholder = "Detalle del servicio";
+          }
+        });
+
         // Navegación del campo detalle al campo valor
         detailInput.addEventListener("keydown", function (event) {
           if (event.key === "Tab" || event.key === "Enter") {
@@ -888,56 +935,60 @@
             }
 
             // Validate non-empty rows
-            if (!detail) {
-              // Agregar feedback visual para campo detalle vacío
+            if (detail && (!valueStr || isNaN(value) || value <= 0)) {
+              // Si hay detalle pero NO hay valor válido
+              valueInput.style.borderColor = "#dc3545";
+              valueInput.style.backgroundColor = "#fff5f5";
+              valueInput.focus();
+              valueInput.select();
+
+              // Mostrar mensaje específico
+              messageArea.textContent =
+                `⚠️ Debe ingresar un valor numérico mayor que 0 para el servicio: "${detail}"`;
+              messageArea.style.color = "#dc3545";
+              messageArea.style.fontWeight = "bold";
+
+              // Limpiar mensaje después de 5 segundos
+              setTimeout(() => {
+                messageArea.textContent = "";
+                messageArea.style.color = "black";
+                messageArea.style.fontWeight = "normal";
+              }, 5000);
+
+              return;
+            }
+
+            if (!detail && (valueStr && !isNaN(value) && value > 0)) {
+              // Si hay valor pero NO hay detalle
               detailInput.style.borderColor = "#dc3545";
               detailInput.style.backgroundColor = "#fff5f5";
               detailInput.focus();
 
-              // Mostrar mensaje temporal
+              // Mostrar mensaje específico
               messageArea.textContent =
-                "⚠️ Por favor, complete el detalle del servicio antes de continuar.";
+                `⚠️ Debe ingresar una descripción para el servicio con valor $${value.toLocaleString('es-CO')}`;
               messageArea.style.color = "#dc3545";
               messageArea.style.fontWeight = "bold";
 
-              // Limpiar mensaje después de 3 segundos
+              // Limpiar mensaje después de 5 segundos
               setTimeout(() => {
                 messageArea.textContent = "";
                 messageArea.style.color = "black";
                 messageArea.style.fontWeight = "normal";
-              }, 3000);
+              }, 5000);
 
               return;
             }
 
-            if (!valueStr || isNaN(value) || value < 0) {
-              // Agregar feedback visual para campo valor vacío/inválido
-              valueInput.style.borderColor = "#dc3545";
-              valueInput.style.backgroundColor = "#fff5f5";
-              valueInput.focus();
-
-              // Mostrar mensaje temporal
-              messageArea.textContent =
-                "⚠️ Por favor, ingrese un valor válido para el servicio.";
-              messageArea.style.color = "#dc3545";
-              messageArea.style.fontWeight = "bold";
-
-              // Limpiar mensaje después de 3 segundos
-              setTimeout(() => {
-                messageArea.textContent = "";
-                messageArea.style.color = "black";
-                messageArea.style.fontWeight = "normal";
-              }, 3000);
-
-              return;
+            // Solo procesar filas que tienen tanto detalle como valor válidos
+            if (detail && valueStr && !isNaN(value) && value > 0) {
+              workDescription += `${detail}: ${new Intl.NumberFormat("es-CO", {
+                style: "currency",
+                currency: "COP",
+              }).format(value)}\\n`;
+              calculatedCost += value;
+              validItemsCount++;
             }
-
-            workDescription += `${detail}: ${new Intl.NumberFormat("es-CO", {
-              style: "currency",
-              currency: "COP",
-            }).format(value)}\\n`;
-            calculatedCost += value;
-            validItemsCount++;
           }
 
           if (validItemsCount === 0) {
