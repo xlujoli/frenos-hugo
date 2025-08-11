@@ -1,19 +1,41 @@
-# Dependencies
+## Dependencies
 node_modules/
 
-# Environment variables
+## Environment variables
 .env
+.env*.local
 
-# Logs
+## Logs
 logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
-# Build output
+## Build output / cache
 dist/
 build/
+.cache/
+.parcel-cache/
 
-# Optional files
+## Coverage
+coverage/
+
+## Editors & OS
 .DS_Store
+.vscode/*
+!.vscode/extensions.json
+Thumbs.db
+
+## Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+## Misc
+*.tgz
+.npm/
+.eslintcache
+.nyc_output
