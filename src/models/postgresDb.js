@@ -54,23 +54,7 @@ class PostgresDatabase {
       // Probar conexión primero
       await this.testConnection();
 
-      // Crear tabla de usuarios si no existe
-      await this.query(`
-        CREATE TABLE IF NOT EXISTS usuarios (
-          id SERIAL PRIMARY KEY,
-          username VARCHAR(100) UNIQUE NOT NULL,
-          password VARCHAR(200) NOT NULL,
-          rol VARCHAR(50) DEFAULT 'user',
-          fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
 
-      // Insertar usuario Admin si no existe
-      await this.query(`
-        INSERT INTO usuarios (username, password, rol)
-        VALUES ('Admin', 'admin123', 'admin')
-        ON CONFLICT (username) DO NOTHING
-      `);
 
       // Create vehicles table
       await this.query(`
@@ -238,21 +222,6 @@ class PostgresDatabase {
     }
   }
 
-  // Método para crear usuario
-  async createUser({ username, password, rol = "user" }) {
-    try {
-      const query = `
-        INSERT INTO usuarios (username, password, rol)
-        VALUES ($1, $2, $3)
-        RETURNING *
-      `;
-      const result = await this.query(query, [username, password, rol]);
-      return result.rows[0];
-    } catch (error) {
-      console.error("❌ Error creando usuario:", error);
-      throw error;
-    }
-  }
 }
 
 module.exports = PostgresDatabase;
